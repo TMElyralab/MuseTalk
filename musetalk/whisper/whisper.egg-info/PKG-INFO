@@ -1,0 +1,5 @@
+Metadata-Version: 2.1
+Name: whisper
+Version: 1.0
+Author: OpenAI
+Provides-Extra: dev

@@ -1,0 +1,9 @@
+task_0:
+ video_path: "data/video/monalisa.mp4"
+ audio_path: "data/audio/monalisa.wav"
+
+task_1:
+ video_path: "data/video/sun.mp4"
+ audio_path: "data/audio/sun.wav"
+  
+

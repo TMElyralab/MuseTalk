@@ -1,0 +1,10 @@
+.DS_Store
+*.log
+.idea/
+.vscode/
+*.pyc
+.ipynb_checkpoints
+models/
+results/
+data/audio/*.WAV
+data/video/*.mp4
