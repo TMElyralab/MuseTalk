@@ -30,8 +30,8 @@ def main(args):
         input_basename = os.path.basename(video_path).split('.')[0]
         audio_basename  = os.path.basename(audio_path).split('.')[0]
         output_basename = f"{input_basename}_{audio_basename}"
-        crop_coord_save_path = os.path.join(args.result_dir, input_basename+".pkl") # only related to video input
         result_img_save_path = os.path.join(args.result_dir, output_basename) # related to video & audio inputs
+        crop_coord_save_path = os.path.join(result_img_save_path, input_basename+".pkl") # only related to video input
         os.makedirs(result_img_save_path,exist_ok =True)
         
         if args.output_vid_name=="":
@@ -122,7 +122,7 @@ def main(args):
         os.system(cmd_combine_audio)
         
         os.system("rm temp.mp4")
-        os.system(f"rm -r {result_img_save_path}")
+        os.system(f"rm -rf {result_img_save_path}")
         print(f"result is save to {output_vid_name}")
 
 if __name__ == "__main__":
