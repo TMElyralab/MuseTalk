@@ -64,24 +64,24 @@ MuseTalk was trained in latent spaces, where the images were encoded by a freeze
   </tr>
   <tr>
     <td>
-      <img src=assets/demo/man/man.png width="95%">
-    </td>
-    <td >
-      <video src= controls preload></video>
-    </td>
-    <td >
-      <video src= controls preload></video>
-    </td>
-  </tr>
-  <tr>
-    <td>
       <img src=assets/demo/sit/sit.jpeg width="95%">
     </td>
     <td >
-      <video src= controls preload></video>
+      <video src=https://github.com/TMElyralab/MuseTalk/assets/163980830/04365bdf-4fe2-4969-b3f5-6c67153bf292 controls preload></video>
     </td>
     <td >
-      <video src= controls preload></video>
+      <video src=https://github.com/TMElyralab/MuseTalk/assets/163980830/00dccd1a-ae07-435d-84a0-b646041bfe38 controls preload></video>
+    </td>
+  </tr>
+   <tr>
+    <td>
+      <img src=assets/demo/man/man.png width="95%">
+    </td>
+    <td >
+      <video src=https://github.com/TMElyralab/MuseTalk/assets/163980830/a6e7d431-5643-4745-9868-8b423a454153 controls preload></video>
+    </td>
+    <td >
+      <video src=https://github.com/TMElyralab/MuseTalk/assets/163980830/6ccf7bc7-cb48-42de-85bd-076d5ee8a623 controls preload></video>
     </td>
   </tr>
   <tr>
