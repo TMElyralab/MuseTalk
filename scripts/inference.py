@@ -13,6 +13,7 @@ from musetalk.utils.utils import get_file_type,get_video_fps,datagen
 from musetalk.utils.preprocessing import get_landmark_and_bbox,read_imgs,coord_placeholder
 from musetalk.utils.blending import get_image
 from musetalk.utils.utils import load_all_model
+import shutil
 
 # load model weights
 audio_processor,vae,unet,pe  = load_all_model()
@@ -26,6 +27,7 @@ def main(args):
     for task_id in inference_config:
         video_path = inference_config[task_id]["video_path"]
         audio_path = inference_config[task_id]["audio_path"]
+        bbox_shift = inference_config[task_id].get("bbox_shift", args.bbox_shift)
 
         input_basename = os.path.basename(video_path).split('.')[0]
         audio_basename  = os.path.basename(audio_path).split('.')[0]
@@ -42,7 +44,7 @@ def main(args):
         if get_file_type(video_path)=="video":
             save_dir_full = os.path.join(args.result_dir, input_basename)
             os.makedirs(save_dir_full,exist_ok = True)
-            cmd = f"ffmpeg -i {video_path} -start_number 0 {save_dir_full}/%08d.png"
+            cmd = f"ffmpeg -v fatal -i {video_path} -start_number 0 {save_dir_full}/%08d.png"
             os.system(cmd)
             input_img_list = sorted(glob.glob(os.path.join(save_dir_full, '*.[jpJP][pnPN]*[gG]')))
             fps = get_video_fps(video_path)
@@ -62,7 +64,7 @@ def main(args):
             frame_list = read_imgs(input_img_list)
         else:
             print("extracting landmarks...time consuming")
-            coord_list, frame_list = get_landmark_and_bbox(input_img_list,args.bbox_shift)
+            coord_list, frame_list = get_landmark_and_bbox(input_img_list, bbox_shift)
             with open(crop_coord_save_path, 'wb') as f:
                 pickle.dump(coord_list, f)
                 
@@ -117,24 +119,26 @@ def main(args):
         print(cmd_img2video)
         os.system(cmd_img2video)
         
-        cmd_combine_audio = f"ffmpeg -i {audio_path} -i temp.mp4 {output_vid_name} -y"
+        cmd_combine_audio = f"ffmpeg -y -v fatal -i {audio_path} -i temp.mp4 {output_vid_name}"
         print(cmd_combine_audio)
         os.system(cmd_combine_audio)
         
-        os.system("rm temp.mp4")
-        os.system(f"rm -rf {result_img_save_path}")
+        os.remove("temp.mp4")
+        shutil.rmtree(result_img_save_path)
         print(f"result is save to {output_vid_name}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--inference_config",type=str, default="configs/inference/test_img.yaml")
-    parser.add_argument("--bbox_shift",type=int, default=0)
+    parser.add_argument("--inference_config", type=str, default="configs/inference/test_img.yaml")
+    parser.add_argument("--bbox_shift", type=int, default=0)
     parser.add_argument("--result_dir", default='./results', help="path to output")
 
-    parser.add_argument("--fps",type=int, default=25)
-    parser.add_argument("--batch_size",type=int, default=8)
-    parser.add_argument("--output_vid_name",type=str,default='')
-    parser.add_argument("--use_saved_coord",action="store_true", help='use saved coordinate to save time')
+    parser.add_argument("--fps", type=int, default=25)
+    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--output_vid_name", type=str,default='')
+    parser.add_argument("--use_saved_coord",
+                        action="store_true",
+                        help='use saved coordinate to save time')
 
 
     args = parser.parse_args()

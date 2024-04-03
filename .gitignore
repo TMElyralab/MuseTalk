@@ -4,7 +4,7 @@
 .vscode/
 *.pyc
 .ipynb_checkpoints
-models/
+models
 results/
-data/audio/*.WAV
+data/audio/*.wav
 data/video/*.mp4

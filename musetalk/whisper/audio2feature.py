@@ -1,7 +1,5 @@
 import os
-#import whisper
-from whisper import load_model
-#import whisper.whispher as whiisper
+from .whisper import load_model
 import soundfile as sf
 import numpy as np
 import time
@@ -9,10 +7,11 @@ import sys
 sys.path.append("..")
 
 class Audio2Feature():
-    def __init__(self, whisper_model_type="tiny",model_path="./checkpoints/wisper_tiny.pt"):
+    def __init__(self, 
+                 whisper_model_type="tiny",
+                 model_path="./models/whisper/tiny.pt"):
         self.whisper_model_type = whisper_model_type
         self.model = load_model(model_path) #
-
 
     def get_sliced_feature(self,feature_array, vid_idx, audio_feat_length= [2,2],fps = 25):
         """

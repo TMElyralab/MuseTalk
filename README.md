@@ -175,11 +175,6 @@ We recommend a python version >=3.10 and cuda version =11.7. Then build environm
 ```shell
 pip install -r requirements.txt
 ```
-### whisper
-install whisper to extract audio feature (only encoder)
-```
-pip install --editable ./musetalk/whisper
-```
 
 ### mmlab packages
 ```bash
@@ -256,13 +251,13 @@ As a complete solution to virtual human generation, you are suggested to first a
 
 # Note
 
-If you want to launch online video chats, you are suggested to generate videos using MuseV and apply necessary pre-processing such as face detection in advance. During online chatting, only UNet and the VAE decoder are involved, which makes MuseTalk real-time.
+If you want to launch online video chats, you are suggested to generate videos using MuseV and apply necessary pre-processing such as face detection and face parsing in advance. During online chatting, only UNet and the VAE decoder are involved, which makes MuseTalk real-time.
 
 
 # Acknowledgement
-1. We thank open-source components like [whisper](https://github.com/isaacOnline/whisper/tree/extract-embeddings), [dwpose](https://github.com/IDEA-Research/DWPose), [face-alignment](https://github.com/1adrianb/face-alignment), [face-parsing](https://github.com/zllrunning/face-parsing.PyTorch), [S3FD](https://github.com/yxlijun/S3FD.pytorch). 
-1. MuseTalk has referred much to [diffusers](https://github.com/huggingface/diffusers).
-1. MuseTalk has been built on `HDTF` datasets.
+1. We thank open-source components like [whisper](https://github.com/openai/whisper), [dwpose](https://github.com/IDEA-Research/DWPose), [face-alignment](https://github.com/1adrianb/face-alignment), [face-parsing](https://github.com/zllrunning/face-parsing.PyTorch), [S3FD](https://github.com/yxlijun/S3FD.pytorch). 
+1. MuseTalk has referred much to [diffusers](https://github.com/huggingface/diffusers) and [isaacOnline/whisper](https://github.com/isaacOnline/whisper/tree/extract-embeddings).
+1. MuseTalk has been built on [HDTF](https://github.com/MRzzm/HDTF) datasets.
 
 Thanks for open-sourcing!
 

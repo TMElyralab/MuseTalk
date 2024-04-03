@@ -1,9 +1,10 @@
 task_0:
- video_path: "data/video/monalisa.mp4"
- audio_path: "data/audio/monalisa.wav"
+ video_path: "data/video/yongen.mp4"
+ audio_path: "data/audio/yongen.wav"
 
 task_1:
  video_path: "data/video/sun.mp4"
  audio_path: "data/audio/sun.wav"
+ bbox_shift: -7
   
 
