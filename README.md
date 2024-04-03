@@ -67,10 +67,10 @@ MuseTalk was trained in latent spaces, where the images were encoded by a freeze
       <img src=assets/demo/sit/sit.jpeg width="95%">
     </td>
     <td >
-      <video src=https://github.com/TMElyralab/MuseTalk/assets/163980830/04365bdf-4fe2-4969-b3f5-6c67153bf292 controls preload></video>
+      <video src=https://github.com/TMElyralab/MuseTalk/assets/163980830/5fbab81b-d3f2-4c75-abb5-14c76e51769e controls preload></video>
     </td>
     <td >
-      <video src=https://github.com/TMElyralab/MuseTalk/assets/163980830/00dccd1a-ae07-435d-84a0-b646041bfe38 controls preload></video>
+      <video src=https://github.com/TMElyralab/MuseTalk/assets/163980830/f8100f4a-3df8-4151-8de2-291b09269f66 controls preload></video>
     </td>
   </tr>
    <tr>
@@ -140,6 +140,21 @@ MuseTalk was trained in latent spaces, where the images were encoded by a freeze
 
 * For video dubbing, we applied a self-developed tool which can detect the talking person. 
 
+## Some interesting videos!
+<table class="center">
+  <tr style="font-weight: bolder;text-align:center;">
+        <td width="50%">Image</td>
+        <td width="50%">MuseV + MuseTalk</td>
+  </tr>
+  <tr>
+    <td>
+      <img src=assets/demo/video1/video1.png width="95%">
+    </td>
+    <td>
+      <video src=https://github.com/TMElyralab/MuseTalk/assets/163980830/1f02f9c6-8b98-475e-86b8-82ebee82fe0d controls preload></video>
+    </td>
+  </tr>
+</table>
 
 # TODO:
 - [x] trained models and inference codes.
