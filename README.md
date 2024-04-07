@@ -138,7 +138,7 @@ MuseTalk was trained in latent spaces, where the images were encoded by a freeze
   </tr>
 </table>
 
-* For video dubbing, we applied a self-developed tool which can detect the talking person. 
+* For video dubbing, we applied a self-developed tool which can identify the talking person. 
 
 ## Some interesting videos!
 <table class="center">
@@ -232,7 +232,9 @@ Here, we provide the inference script.
 python -m scripts.inference --inference_config configs/inference/test.yaml 
 ```
 configs/inference/test.yaml is the path to the inference configuration file, including video_path and audio_path.
-The video_path should be either a video file or a directory of images.
+The video_path should be either a video file or a directory of images. 
+
+You are recommended to input video with `25fps`, the same fps used when training the model. If your video is far less than 25fps, you are recommended to apply frame interpolation or directly convert the video to 25fps using ffmpeg.
 
 #### Use of bbox_shift to have adjustable results
 :mag_right: We have found that upper-bound of the mask has an important impact on mouth openness. Thus, to control the mask region, we suggest using the `bbox_shift` parameter. Positive values (moving towards the lower half) increase mouth openness, while negative values (moving towards the upper half) decrease mouth openness.
@@ -247,7 +249,7 @@ python -m scripts.inference --inference_config configs/inference/test.yaml --bbo
 
 #### Combining MuseV and MuseTalk
 
-As a complete solution to virtual human generation, you are suggested to first apply [MuseV](https://github.com/TMElyralab/MuseV) to generate a video (text-to-video, image-to-video or pose-to-video) by referring [this](https://github.com/TMElyralab/MuseV?tab=readme-ov-file#text2video). Then, you can use `MuseTalk` to generate a lip-sync video by referring [this](https://github.com/TMElyralab/MuseTalk?tab=readme-ov-file#inference).
+As a complete solution to virtual human generation, you are suggested to first apply [MuseV](https://github.com/TMElyralab/MuseV) to generate a video (text-to-video, image-to-video or pose-to-video) by referring [this](https://github.com/TMElyralab/MuseV?tab=readme-ov-file#text2video). Frame interpolation is suggested to increase frame rate. Then, you can use `MuseTalk` to generate a lip-sync video by referring [this](https://github.com/TMElyralab/MuseTalk?tab=readme-ov-file#inference).
 
 # Note
 
