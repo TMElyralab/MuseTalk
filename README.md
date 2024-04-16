@@ -31,7 +31,9 @@ We introduce `MuseTalk`, a **real-time high quality** lip-syncing model (30fps+ 
 
 ## Model
 ![Model Structure](assets/figs/musetalk_arc.jpg)
-MuseTalk was trained in latent spaces, where the images were encoded by a freezed VAE. The audio was encoded by a freezed `whisper-tiny` model. The architecture of the generation network was borrowed from the UNet of the `stable-diffusion-v1-4`, where the audio embeddings were fused to the image embeddings by cross-attention.
+MuseTalk was trained in latent spaces, where the images were encoded by a freezed VAE. The audio was encoded by a freezed `whisper-tiny` model. The architecture of the generation network was borrowed from the UNet of the `stable-diffusion-v1-4`, where the audio embeddings were fused to the image embeddings by cross-attention. 
+
+Note that although we use a very similar architecture as Stable Diffusion, MuseTalk is distinct in that it is `Not` a diffusion model. Instead, MuseTalk operates by inpainting in the latent space with `a single step`.
 
 ## Cases
 ### MuseV + MuseTalk make human photos alive！
