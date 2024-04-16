@@ -9,3 +9,6 @@ opencv-python==4.9.0.80
 soundfile==0.12.1
 transformers==4.39.2
 
+gdown
+requests
+imageio[ffmpeg]
