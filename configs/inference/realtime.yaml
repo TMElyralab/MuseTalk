@@ -1,0 +1,10 @@
+avator_1:
+ preparation: False
+ bbox_shift: 5
+ video_path: "data/video/sun.mp4"
+ audio_clips:
+     audio_0: "data/audio/yongen.wav"
+     audio_1: "data/audio/sun.wav"
+ 
+  
+
