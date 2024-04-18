@@ -205,7 +205,7 @@ class Avatar:
             #combine_frame = get_image(ori_frame,res_frame,bbox)
             combine_frame = get_image_blending(ori_frame,res_frame,bbox,mask,mask_crop_box)
 
-            fps = 1/(time.time()-start)
+            fps = 1/(time.time()-start+1e-6)
             print(f"Generating the {self.idx}-th frame with FPS: {fps:.2f}")
             cv2.imwrite(f"{self.avatar_path}/tmp/{str(self.idx).zfill(8)}.png",combine_frame)
             self.idx = self.idx + 1
