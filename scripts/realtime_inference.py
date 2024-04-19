@@ -206,7 +206,7 @@ class Avatar:
             combine_frame = get_image_blending(ori_frame,res_frame,bbox,mask,mask_crop_box)
 
             fps = 1/(time.time()-start+1e-6)
-            print(f"Generating the {self.idx}-th frame with FPS: {fps:.2f}")
+            print(f"Displaying the {self.idx}-th frame with FPS: {fps:.2f}")
             cv2.imwrite(f"{self.avatar_path}/tmp/{str(self.idx).zfill(8)}.png",combine_frame)
             self.idx = self.idx + 1
 
@@ -244,12 +244,12 @@ class Avatar:
         
         if out_vid_name is not None: 
             # optional
-            cmd_img2video = f"ffmpeg -y -v fatal -r {fps} -f image2 -i {self.avatar_path}/tmp/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 {self.avatar_path}/temp.mp4"
+            cmd_img2video = f"ffmpeg -y -v warning -r {fps} -f image2 -i {self.avatar_path}/tmp/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 {self.avatar_path}/temp.mp4"
             print(cmd_img2video)
             os.system(cmd_img2video)
 
             output_vid = os.path.join(self.video_out_path, out_vid_name+".mp4") # on
-            cmd_combine_audio = f"ffmpeg -y -v fatal -i {audio_path} -i {self.avatar_path}/temp.mp4 {output_vid}"
+            cmd_combine_audio = f"ffmpeg -y -v warning -i {audio_path} -i {self.avatar_path}/temp.mp4 {output_vid}"
             print(cmd_combine_audio)
             os.system(cmd_combine_audio)
 

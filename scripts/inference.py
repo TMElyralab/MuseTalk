@@ -36,7 +36,7 @@ def main(args):
         crop_coord_save_path = os.path.join(result_img_save_path, input_basename+".pkl") # only related to video input
         os.makedirs(result_img_save_path,exist_ok =True)
         
-        if args.output_vid_name=="":
+        if args.output_vid_name is None:
             output_vid_name = os.path.join(args.result_dir, output_basename+".mp4")
         else:
             output_vid_name = os.path.join(args.result_dir, args.output_vid_name)
@@ -48,10 +48,16 @@ def main(args):
             os.system(cmd)
             input_img_list = sorted(glob.glob(os.path.join(save_dir_full, '*.[jpJP][pnPN]*[gG]')))
             fps = get_video_fps(video_path)
-        else: # input img folder
+        elif get_file_type(video_path)=="image":
+            input_img_list = [video_path, ]
+            fps = args.fps
+        elif os.path.isdir(video_path):  # input img folder
             input_img_list = glob.glob(os.path.join(video_path, '*.[jpJP][pnPN]*[gG]'))
             input_img_list = sorted(input_img_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
             fps = args.fps
+        else:
+            raise ValueError(f"{video_path} should be a video file, an image file or a directory of images")
+
         #print(input_img_list)
         ############################################## extract audio feature ##############################################
         whisper_feature = audio_processor.audio2feat(audio_path)
@@ -114,12 +120,12 @@ def main(args):
             
             combine_frame = get_image(ori_frame,res_frame,bbox)
             cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",combine_frame)
-            
-        cmd_img2video = f"ffmpeg -y -v fatal -r {fps} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 temp.mp4"
+
+        cmd_img2video = f"ffmpeg -y -v warning -r {fps} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 temp.mp4"
         print(cmd_img2video)
         os.system(cmd_img2video)
         
-        cmd_combine_audio = f"ffmpeg -y -v fatal -i {audio_path} -i temp.mp4 {output_vid_name}"
+        cmd_combine_audio = f"ffmpeg -y -v warning -i {audio_path} -i temp.mp4 {output_vid_name}"
         print(cmd_combine_audio)
         os.system(cmd_combine_audio)
         
@@ -135,7 +141,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--fps", type=int, default=25)
     parser.add_argument("--batch_size", type=int, default=8)
-    parser.add_argument("--output_vid_name", type=str,default='')
+    parser.add_argument("--output_vid_name", type=str, default=None)
     parser.add_argument("--use_saved_coord",
                         action="store_true",
                         help='use saved coordinate to save time')
@@ -143,4 +149,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
-    

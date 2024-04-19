@@ -244,7 +244,7 @@ Here, we provide the inference script.
 python -m scripts.inference --inference_config configs/inference/test.yaml 
 ```
 configs/inference/test.yaml is the path to the inference configuration file, including video_path and audio_path.
-The video_path should be either a video file or a directory of images. 
+The video_path should be either a video file, an image file or a directory of images. 
 
 You are recommended to input video with `25fps`, the same fps used when training the model. If your video is far less than 25fps, you are recommended to apply frame interpolation or directly convert the video to 25fps using ffmpeg.
 
@@ -276,12 +276,12 @@ configs/inference/realtime.yaml is the path to the real-time inference configura
     ```
     Inferring using: data/audio/yongen.wav
     ```
-1. While MuseTalk is inferring, sub-threads can simultaneously stream the results to the users. The generation process can achieve up to 50fps on an NVIDIA Tesla V100.
+1. While MuseTalk is inferring, sub-threads can simultaneously stream the results to the users. The generation process can achieve 30fps+ on an NVIDIA Tesla V100.
     ```
     2%|██▍                                                         | 3/141 [00:00<00:32,  4.30it/s]   # inference process
-    Generating the 6-th frame with FPS: 48.58                                                  # playing process
-    Generating the 7-th frame with FPS: 48.74
-    Generating the 8-th frame with FPS: 49.17
+    Displaying the 6-th frame with FPS: 48.58                                                  # display process
+    Displaying the 7-th frame with FPS: 48.74
+    Displaying the 8-th frame with FPS: 49.17
     3%|███▎                                                        | 4/141 [00:00<00:32,  4.21it/s]
     ```
 1. Set `preparation` to `False` and run this script if you want to genrate more videos using the same avatar.
