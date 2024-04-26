@@ -266,6 +266,9 @@ As a complete solution to virtual human generation, you are suggested to first a
 #### :new: Real-time inference
 
 Here, we provide the inference script. This script first applies necessary pre-processing such as face detection, face parsing and VAE encode in advance. During inference, only UNet and the VAE decoder are involved, which makes MuseTalk real-time.
+
+Note that in this script, the generation time is also limited by I/O (e.g. saving images).
+
 ```
 python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml
 ```
