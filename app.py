@@ -343,15 +343,28 @@ def check_video(video):
     # # Run the ffmpeg command to change the frame rate to 25fps
     # command = f"ffmpeg -i {video} -r 25 -vcodec libx264 -vtag hvc1 -pix_fmt yuv420p crf 18   {output_video}  -y"
 
-    # 读取视频
+    # read video
     reader = imageio.get_reader(video)
-    fps = reader.get_meta_data()['fps']  # 获取原视频的帧率
+    fps = reader.get_meta_data()['fps']  # get fps from original video
 
-    # 将帧存储在列表中
+    # conver fps to 25
     frames = [im for im in reader]
+    target_fps = 25
+    
+    L = len(frames)
+    L_target = int(L / fps * target_fps)
+    original_t = [x / fps for x in range(1, L+1)]
+    t_idx = 0
+    target_frames = []
+    for target_t in range(1, L_target+1):
+        while target_t / target_fps > original_t[t_idx]:
+            t_idx += 1      # find the first t_idx so that target_t / target_fps <= original_t[t_idx]
+            if t_idx >= L:
+                break
+        target_frames.append(frames[t_idx])
 
-    # 保存视频
-    imageio.mimwrite(output_video, frames, 'FFMPEG', fps=25, codec='libx264', quality=9, pixelformat='yuv420p')
+    # save video
+    imageio.mimwrite(output_video, target_frames, 'FFMPEG', fps=25, codec='libx264', quality=9, pixelformat='yuv420p')
     return output_video
 
 
