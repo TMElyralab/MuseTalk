@@ -267,10 +267,8 @@ As a complete solution to virtual human generation, you are suggested to first a
 
 Here, we provide the inference script. This script first applies necessary pre-processing such as face detection, face parsing and VAE encode in advance. During inference, only UNet and the VAE decoder are involved, which makes MuseTalk real-time.
 
-Note that in this script, the generation time is also limited by I/O (e.g. saving images).
-
 ```
-python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml
+python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml --batch_size 4
 ```
 configs/inference/realtime.yaml is the path to the real-time inference configuration file, including `preparation`, `video_path` , `bbox_shift` and `audio_clips`. 
 
@@ -280,17 +278,14 @@ configs/inference/realtime.yaml is the path to the real-time inference configura
     Inferring using: data/audio/yongen.wav
     ```
 1. While MuseTalk is inferring, sub-threads can simultaneously stream the results to the users. The generation process can achieve 30fps+ on an NVIDIA Tesla V100.
-    ```
-    2%|██▍                                                         | 3/141 [00:00<00:32,  4.30it/s]   # inference process
-    Displaying the 6-th frame with FPS: 48.58                                                  # display process
-    Displaying the 7-th frame with FPS: 48.74
-    Displaying the 8-th frame with FPS: 49.17
-    3%|███▎                                                        | 4/141 [00:00<00:32,  4.21it/s]
-    ```
 1. Set `preparation` to `False` and run this script if you want to genrate more videos using the same avatar.
 
-If you want to generate multiple videos using the same avatar/video, you can also use this script to **SIGNIFICANTLY** expedite the generation process.
-
+##### Note for Real-time inference
+1. If you want to generate multiple videos using the same avatar/video, you can also use this script to **SIGNIFICANTLY** expedite the generation process.
+1. In the previous script, the generation time is also limited by I/O (e.g. saving images). If you just want to test the generation speed without saving the images, you can run
+```
+python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml --skip_save_images
+```
 
 # Acknowledgement
 1. We thank open-source components like [whisper](https://github.com/openai/whisper), [dwpose](https://github.com/IDEA-Research/DWPose), [face-alignment](https://github.com/1adrianb/face-alignment), [face-parsing](https://github.com/zllrunning/face-parsing.PyTorch), [S3FD](https://github.com/yxlijun/S3FD.pytorch). 

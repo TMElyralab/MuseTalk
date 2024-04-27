@@ -13,7 +13,11 @@ class Audio2Feature():
         self.whisper_model_type = whisper_model_type
         self.model = load_model(model_path) #
 
-    def get_sliced_feature(self,feature_array, vid_idx, audio_feat_length= [2,2],fps = 25):
+    def get_sliced_feature(self,
+                           feature_array, 
+                           vid_idx, 
+                           audio_feat_length=[2,2],
+                           fps=25):
         """
         Get sliced features based on a given index
         :param feature_array: 
