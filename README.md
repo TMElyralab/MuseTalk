@@ -29,6 +29,7 @@ We introduce `MuseTalk`, a **real-time high quality** lip-syncing model (30fps+ 
 - [04/02/2024] Release MuseTalk project and pretrained models.
 - [04/16/2024] Release Gradio [demo](https://huggingface.co/spaces/TMElyralab/MuseTalk) on HuggingFace Spaces (thanks to HF team for their community grant)
 - [04/17/2024] :mega: We release a pipeline that utilizes MuseTalk for real-time inference.
+- [04/30/2024] We release an initial version of training codes in `train_codes`.
 
 ## Model
 ![Model Structure](assets/figs/musetalk_arc.jpg)
@@ -165,7 +166,7 @@ Note that although we use a very similar architecture as Stable Diffusion, MuseT
 - [x] Huggingface Gradio [demo](https://huggingface.co/spaces/TMElyralab/MuseTalk).
 - [x] codes for real-time inference.
 - [ ] technical report.
-- [ ] training codes.
+- [x] training codes.
 - [ ] a better model (may take longer).
 
 
