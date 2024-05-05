@@ -85,12 +85,12 @@ class Audio2Feature():
         print(f"video in {fps} FPS, audio idx in 50FPS")
         while 1:
             start_idx = int(i * whisper_idx_multiplier)
+            if start_idx >= len(feature_array):
+                break
             selected_feature,selected_idx = self.get_sliced_feature(feature_array= feature_array,vid_idx = i,audio_feat_length=audio_feat_length,fps=fps)
             #print(f"i:{i},selected_idx {selected_idx}")
             whisper_chunks.append(selected_feature)
             i += 1
-            if start_idx>len(feature_array):
-                break
 
         return whisper_chunks
 
