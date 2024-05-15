@@ -1,7 +1,7 @@
---extra-index-url https://download.pytorch.org/whl/cu118 
-torch==2.0.1
-torchvision==0.15.2 
-torchaudio==2.0.2
+--extra-index-url https://download.pytorch.org/whl/cu117 
+torch==2.1.0
+torchvision==0.16
+torchaudio==2.1.0
 diffusers==0.27.2
 accelerate==0.28.0
 tensorflow==2.12.0
@@ -19,3 +19,10 @@ ffmpeg-python
 gradio
 spaces
 moviepy
+
+#TTS==0.20.2
+
+gfpgan
+#basicsr==1.4.2
+
+
