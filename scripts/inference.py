@@ -14,7 +14,6 @@ from musetalk.utils.preprocessing import get_landmark_and_bbox,read_imgs,coord_p
 from musetalk.utils.blending import get_image
 from musetalk.utils.utils import load_all_model
 import shutil
-from gfpgan import GFPGANer
 
 # load model weights
 audio_processor, vae, unet, pe = load_all_model()
@@ -31,44 +30,6 @@ def main(args):
     
     inference_config = OmegaConf.load(args.inference_config)
     print(inference_config)
-
-    # GFPGan
-    arch = 'clean'
-    channel_multiplier = 2
-    model_name = 'GFPGANv1.4'
-    model_path = os.path.join('models', 'GFPGAN' + model_name + '.pth')
-    bg_upsampler = None
-
-    # ------------------------ set up background upsampler ------------------------
-    if bg_upsampler == 'realesrgan':
-        if not torch.cuda.is_available():  # CPU
-            import warnings
-            warnings.warn('The unoptimized RealESRGAN is slow on CPU. We do not use it. '
-                          'If you really want to use it, please modify the corresponding codes.')
-            bg_upsampler = None
-        else:
-            from basicsr.archs.rrdbnet_arch import RRDBNet
-            from realesrgan import RealESRGANer
-            model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2)
-            bg_upsampler = RealESRGANer(
-                scale=2,
-                model_path='https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
-                model=model,
-                tile=400,
-                tile_pad=10,
-                pre_pad=0,
-                half=True)  # need to set False in CPU mode
-    else:
-        bg_upsampler = None
-
-    restorer = GFPGANer(
-        model_path=model_path,
-        upscale=2,
-        arch=arch,
-        channel_multiplier=channel_multiplier,
-        bg_upsampler=bg_upsampler
-    )
-    
     for task_id in inference_config:
         video_path = inference_config[task_id]["video_path"]
         audio_path = inference_config[task_id]["audio_path"]
@@ -165,16 +126,7 @@ def main(args):
                 continue
             
             combine_frame = get_image(ori_frame,res_frame,bbox)
-
-            # restore faces and background if necessary
-            cropped_faces, restored_faces, r_img = restorer.enhance(
-                combine_frame,
-                has_aligned=False,
-                only_center_face=False,
-                paste_back=True
-            )
-        
-            cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",r_img)
+            cv2.imwrite(f"{result_img_save_path}/{str(i).zfill(8)}.png",combine_frame)
 
         cmd_img2video = f"ffmpeg -y -v warning -r {fps} -f image2 -i {result_img_save_path}/%08d.png -vcodec libx264 -vf format=rgb24,scale=out_color_matrix=bt709,format=yuv420p -crf 18 temp.mp4"
         print(cmd_img2video)
