@@ -118,18 +118,6 @@ class Dataset(object):
 
         return window
     
-
-    def crop_audio_window(self, spec, start_frame):
-        if type(start_frame) == int:
-            start_frame_num = start_frame
-        else:
-            start_frame_num = self.get_frame_id(start_frame)
-        start_idx = int(80. * (start_frame_num / float(hparams.fps)))
-
-        end_idx = start_idx + syncnet_mel_step_size
-
-        return spec[start_idx : end_idx, :]
-    
     def prepare_window(self, window):
         #  1 x H x W x 3
         x = np.asarray(window) / 255.
