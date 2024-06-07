@@ -10,7 +10,7 @@ accelerate launch train.py \
 --train_batch_size=8 \
 --gradient_accumulation_steps=4 \
 --gradient_checkpointing \
---max_train_steps=50000 \
+--max_train_steps=100000 \
 --learning_rate=5e-05 \
 --max_grad_norm=1 \
 --lr_scheduler="cosine" \

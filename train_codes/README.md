@@ -43,7 +43,7 @@ sh train.sh
 ## Inference with trained checkpoit
 Simply run after training the model, the model checkpoints are saved at train_codes/output usually
 ```
-python -m scripts.inference --inference_config configs/inference/test.yaml --unet_checkpoint path_to_trained_checkpoint_folder
+python -m scripts.finetuned_inference --inference_config configs/inference/test.yaml --unet_checkpoint path_to_trained_checkpoint_folder
 ```
 
 ## TODO
