@@ -25,6 +25,32 @@ audio_processor, vae, unet, pe = load_all_model()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 timesteps = torch.tensor([0], device=device)
 
+def get_largest_integer_filename(folder_path):
+    # Check if the folder exists
+    if not os.path.isdir(folder_path):
+        return -1
+
+    # Get the list of files in the folder
+    files = os.listdir(folder_path)
+
+    # Check if the folder is empty
+    if not files:
+        return -1
+
+    # Extract the integer part of filenames and find the largest
+    largest_integer = -1
+    for file in files:
+        try:
+            # Get the integer part of the filename
+            file_int = int(os.path.splitext(file)[0])
+            if file_int > largest_integer:
+                largest_integer = file_int
+        except ValueError:
+            # Skip files that don't have an integer filename
+            continue
+
+    return largest_integer
+
 def datagen(whisper_chunks,
             crop_images,
             batch_size=8,
@@ -58,10 +84,10 @@ def main(args):
         unet.model = unet.model.half()
     
     inference_config = OmegaConf.load(args.inference_config)
-    total_audio_index=-1
-    total_image_index=-1
-    temp_audio_index=-1
-    temp_image_index=-1
+    total_audio_index=get_largest_integer_filename(f"data/audios/{args.folder_name}")
+    total_image_index=get_largest_integer_filename(f"data/images/{args.folder_name}")
+    temp_audio_index=total_audio_index
+    temp_image_index=total_image_index
     for task_id in inference_config:
         video_path = inference_config[task_id]["video_path"]
         audio_path = inference_config[task_id]["audio_path"]

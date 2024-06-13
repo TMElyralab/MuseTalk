@@ -18,10 +18,12 @@ accelerate launch train.py \
 --output_dir="output" \
 --val_out_dir='val' \
 --testing_speed \
---checkpointing_steps=1000 \
---validation_steps=1000 \
+--checkpointing_steps=2000 \
+--validation_steps=2000 \
 --reconstruction \
 --resume_from_checkpoint="latest" \
 --use_audio_length_left=2 \
 --use_audio_length_right=2 \
 --whisper_model_type="tiny" \
+--train_json="/root/MuseTalk/train.json" \
+--val_json="/root/MuseTalk/val.json" \

@@ -48,15 +48,15 @@ def get_image_list(data_root, split):
 class Dataset(object):
     def __init__(self, 
                  data_root, 
-                 split, 
+                 json_path, 
                  use_audio_length_left=1,
                  use_audio_length_right=1,
                  whisper_model_type = "tiny"
                  ):
-        self.all_videos, self.all_imgNum = get_image_list(data_root, split)
+        # self.all_videos, self.all_imgNum = get_image_list(data_root, split)
         self.audio_feature = [use_audio_length_left,use_audio_length_right]
         self.all_img_names = []
-        self.split = split
+        # self.split = split
         self.img_names_path = '../data'
         self.whisper_model_type = whisper_model_type
         self.use_audio_length_left = use_audio_length_left
@@ -72,10 +72,13 @@ class Dataset(object):
             self.whisper_feature_H = 1280
         self.whisper_feature_concateW = self.whisper_feature_W*2*(self.use_audio_length_left+self.use_audio_length_right+1) #5*2*（2+2+1）= 50
 
-        if(self.split=="train"):
-            self.all_videos=["../data/images/train"]
-        if(self.split=="val"):
-            self.all_videos=["../data/images/test"]
+        # if(self.split=="train"):
+        #     self.all_videos=["../data/images/train"]
+        # if(self.split=="val"):
+        #     self.all_videos=["../data/images/test"]
+        with open(json_path, 'r') as file:
+            self.all_videos = json.load(file)
+
         for vidname in tqdm(self.all_videos, desc="Preparing dataset"):
             json_path_names = f"{self.img_names_path}/{vidname.split('/')[-1].split('.')[0]}.json"
             if not os.path.exists(json_path_names):
