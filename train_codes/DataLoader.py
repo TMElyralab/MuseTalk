@@ -71,11 +71,6 @@ class Dataset(object):
             self.whisper_feature_W = 33
             self.whisper_feature_H = 1280
         self.whisper_feature_concateW = self.whisper_feature_W*2*(self.use_audio_length_left+self.use_audio_length_right+1) #5*2*（2+2+1）= 50
-
-        # if(self.split=="train"):
-        #     self.all_videos=["../data/images/train"]
-        # if(self.split=="val"):
-        #     self.all_videos=["../data/images/test"]
         with open(json_path, 'r') as file:
             self.all_videos = json.load(file)
 
