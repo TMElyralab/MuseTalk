@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import time
 import math
-from utils import decode_latents, preprocess_img_tensor
+from utils.utils import decode_latents, preprocess_img_tensor
 import os
 from PIL import Image
 from typing import Any, Dict, List, Optional, Tuple, Union
