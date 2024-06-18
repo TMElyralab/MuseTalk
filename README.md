@@ -219,7 +219,7 @@ You can download weights manually as follows:
    - [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse)
    - [whisper](https://openaipublic.azureedge.net/main/whisper/models/65147644a518d12f04e32d6f3b26facc3f8dd46e5390956a9424a650c0ce22b9/tiny.pt)
    - [dwpose](https://huggingface.co/yzd-v/DWPose/tree/main)
-   - [face-parse-bisent](https://github.com/zllrunning/face-parsing.PyTorch)
+   - [face-parse-bisent](https://huggingface.co/ManyOtherFunctions/face-parse-bisent/tree/main)
    - [resnet18](https://download.pytorch.org/models/resnet18-5c106cde.pth)
 
 
