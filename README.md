@@ -19,6 +19,15 @@ We introduce `MuseTalk`, a **real-time high quality** lip-syncing model (30fps+ 
 
 :new: Update: We are thrilled to announce that [MusePose](https://github.com/TMElyralab/MusePose/) has been released. MusePose is an image-to-video generation framework for virtual human under control signal like pose. Together with MuseV and MuseTalk, we hope the community can join us and march towards the vision where a virtual human can be generated end2end with native ability of full body movement and interaction.
 
+# Recruitment
+Join Lyra Lab, Tencent Music Entertainment!
+
+We are currently seeking AIGC researchers including Internships, New Grads, and Senior.
+
+Please find details in the following two links or contact zkangchen@tencent.com
+
+- AI Researcher (https://join.tencentmusic.com/social/post-details/?id=13488, https://join.tencentmusic.com/social/post-details/?id=13502)
+
 # Overview
 `MuseTalk` is a real-time high quality audio-driven lip-syncing model trained in the latent space of `ft-mse-vae`, which
 
