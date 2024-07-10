@@ -22,7 +22,7 @@ We introduce `MuseTalk`, a **real-time high quality** lip-syncing model (30fps+ 
 # Recruitment
 Join Lyra Lab, Tencent Music Entertainment!
 
-We are currently seeking AIGC researchers including Internships, New Grads, and Senior.
+We are currently seeking AIGC researchers including Internships, New Grads, and Senior (实习、校招、社招).
 
 Please find details in the following two links or contact zkangchen@tencent.com
 
