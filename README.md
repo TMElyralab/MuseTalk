@@ -222,15 +222,11 @@ export FFMPEG_PATH=/musetalk/ffmpeg-4.4-amd64-static
 ### Download weights
 You can download weights manually as follows:
 
-1. Download our trained [weights](https://huggingface.co/TMElyralab/MuseTalk).
+```
+!chmod +x download_weights.sh
 
-2. Download the weights of other components:
-   - [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse)
-   - [whisper](https://openaipublic.azureedge.net/main/whisper/models/65147644a518d12f04e32d6f3b26facc3f8dd46e5390956a9424a650c0ce22b9/tiny.pt)
-   - [dwpose](https://huggingface.co/yzd-v/DWPose/tree/main)
-   - [face-parse-bisent](https://github.com/zllrunning/face-parsing.PyTorch)
-   - [resnet18](https://download.pytorch.org/models/resnet18-5c106cde.pth)
-
+!./download_weights.sh
+```
 
 Finally, these weights should be organized in `models` as follows:
 ```
