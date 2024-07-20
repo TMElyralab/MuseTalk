@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  musetalk:
+    build: .
+    volumes:
+      - .:/app/MuseTalk
+    environment:
+      - FFMPEG_PATH=/usr/local/bin/ffmpeg
+    command: ["--inference_config", "configs/inference/test.yaml"]
