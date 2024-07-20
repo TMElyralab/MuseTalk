@@ -4,12 +4,12 @@ task_0:
   
 task_1:
  video_path: "data/video/13_K.mp4"
- audio_path: "data/audio/10_S.wav"
-  
+ audio_path: "data/audio/96_E.wav"
+
 task_2:
  video_path: "data/video/13_K.mp4"
- audio_path: "data/audio/96_E.wav"
-  
+ audio_path: "data/audio/10_S.wav"
+    
 task_3:
  video_path: "data/video/13_K.mp4"
  audio_path: "data/audio/96_K.wav"

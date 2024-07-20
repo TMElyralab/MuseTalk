@@ -7,4 +7,4 @@ services:
       - .:/app/MuseTalk
     environment:
       - FFMPEG_PATH=/usr/local/bin/ffmpeg
-    command: ["--inference_config", "configs/inference/test.yaml"]
+    command: ["--inference_config", "configs/inference/test1.yaml"]
