@@ -1,15 +1,17 @@
-# Draft training codes
+# Data preprocessing
 
-We provde the draft training codes here. Unfortunately, data preprocessing code is still being reorganized.
+Create two config yaml files, one for training and other for testing (both in same format as configs/inference/test.yaml)
+The train yaml file should contain the training video paths and corresponding audio paths
+The test yaml file should contain the validation video paths and corresponding audio paths
 
-## Setup
+Run:
+```
+./data_new.sh train output train_video1.mp4 train_video2.mp4
+./data_new.sh test output test_video1.mp4 test_video2.mp4
+```
+This creates folders which contain the image frames and npy files. This also creates train.json and val.json which can be used during the training.
 
-We trained our model on an NVIDIA A100 with `batch size=8, gradient_accumulation_steps=4` for 20w+ steps. Using multiple GPUs should accelerate the training.
-
-## Data preprocessing
- You could refer the inference codes which [crop the face images](https://github.com/TMElyralab/MuseTalk/blob/main/scripts/inference.py#L79) and [extract audio features](https://github.com/TMElyralab/MuseTalk/blob/main/scripts/inference.py#L69).
-
-Finally, the data should be organized as follows:
+## Data organization
 ```
 ./data/
 ├── images
@@ -35,9 +37,16 @@ Finally, the data should be organized as follows:
 ## Training
 Simply run after preparing the preprocessed data
 ```
-sh train.sh
+cd train_codes
+sh train.sh #--train_json="../train.json" \(Generated in Data preprocessing step.)
+            #--val_json="../val.json" \
+```
+## Inference with trained checkpoit
+Simply run after training the model, the model checkpoints are saved at train_codes/output usually
+```
+python -m scripts.finetuned_inference --inference_config configs/inference/test.yaml --unet_checkpoint path_to_trained_checkpoint_folder
 ```
 
 ## TODO
-- [ ] release data preprocessing codes
+- [x] release data preprocessing codes
 - [ ] release some novel designs in training (after technical report)
