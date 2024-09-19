@@ -183,12 +183,13 @@ def main(args):
         video_num = len(whisper_chunks)
         batch_size = args.batch_size
         gen = datagen(whisper_chunks,crop_data,batch_size)
+        crop_index = 0
         for i, (whisper_batch,crop_batch) in enumerate(tqdm(gen,total=int(np.ceil(float(video_num)/batch_size)))):
-            crop_index=0
             for image,audio in zip(crop_batch,whisper_batch):
-                cv2.imwrite(f"data/images/{folder_name}/{str(i+crop_index+total_image_index+1)}.png",image)
-                crop_index+=1
-                temp_image_index=i+crop_index+total_image_index+1
+                cv2.imwrite(f"data/images/{folder_name}/{str(crop_index+total_image_index+1)}.png",image)
+                temp_image_index = crop_index + total_image_index + 1
+                crop_index += 1
+                
                 # np.save(f'data/audios/{folder_name}/{str(i+crop_index)}.npy', audio)
         total_image_index=temp_image_index
         gc.collect()
