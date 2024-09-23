@@ -135,7 +135,7 @@ class Dataset(object):
             #随机选择某个video里
             vidname = self.all_videos[idx].split('/')[-1]
             video_imgs = self.all_img_names[idx]
-            if len(video_imgs) == 0:
+            if len(video_imgs) <= 11:
                 continue
             img_name = random.choice(video_imgs)
             img_idx = int(basename(img_name).split(".")[0])
