@@ -264,7 +264,7 @@ def inference(audio_path,video_path,bbox_shift,progress=gr.Progress(track_tqdm=T
     # 读取视频
     reader = imageio.get_reader(input_video)
     fps = reader.get_meta_data()['fps']  # 获取原视频的帧率
-
+    reader.close() # 否则在win11上会报错：PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'temp.mp4'
     # 将帧存储在列表中
     frames = images
 
