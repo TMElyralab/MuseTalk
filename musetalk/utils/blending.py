@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import cv2
+import copy
 from face_parsing import FaceParsing
 
 fp = FaceParsing()
