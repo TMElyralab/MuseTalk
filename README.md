@@ -44,7 +44,7 @@ Please find details in the following two links or contact zkangchen@tencent.com
 - [04/02/2024] Release MuseTalk project and pretrained models.
 - [04/16/2024] Release Gradio [demo](https://huggingface.co/spaces/TMElyralab/MuseTalk) on HuggingFace Spaces (thanks to HF team for their community grant)
 - [04/17/2024] : We release a pipeline that utilizes MuseTalk for real-time inference.
-- [10/18/2024] :mega: We release the [technical report](https://arxiv.org/abs/2410.10122).
+- [10/18/2024] :mega: We release the [technical report](https://arxiv.org/abs/2410.10122). Our report details a superior model to the open-source L1 loss version. It includes GAN and perceptual losses for improved clarity, and sync loss for enhanced performance.
 
 ## Model
 ![Model Structure](assets/figs/musetalk_arc.jpg)
