@@ -1,35 +1,64 @@
+"""
+app.py
+
+MuseTalk Application: A real-time lip synchronization tool that aligns audio with video
+using latent space inpainting techniques for high-quality results.
+
+This script sets up the core functionality for MuseTalk, including model downloading, 
+video preprocessing, inference, and video generation with synchronized audio. The 
+application leverages deep learning models to generate synchronized talking videos 
+by processing an input video and an audio file.
+
+Key Functions:
+- `download_model()`: Downloads required deep learning models and resources if not already present.
+- `inference()`: Processes the input audio and video to generate synchronized talking frames, 
+  which are then stitched into an output video.
+- `check_video()`: Ensures the reference video is at 25fps for processing compatibility.
+- Gradio Interface Setup: Provides a web interface for users to upload audio and video files 
+  and receive synchronized output videos.
+
+Usage:
+Run this script to start a Gradio-based web interface, allowing users to easily generate 
+synchronized talking videos. This script is suitable for deployment on local servers 
+and uses GPU acceleration if available.
+
+Dependencies:
+This script depends on several external libraries, including Gradio, PyTorch, ImageIO, 
+MoviePy, and OpenCV, along with specific MuseTalk utility modules for processing.
+
+Author:
+Lyra Lab, Tencent Music Entertainment
+
+Customized by Eddie Offermann, Big Blue Ceiling
+"""
 import os
 import time
-import pdb
-import re
+import copy
+from argparse import Namespace
+import glob
+import pickle
+from colorama import Fore, Back, Style
+from colorama import init as colorama_init
 
 import gradio as gr
 import spaces
 import numpy as np
-import sys
-import subprocess
 
 from huggingface_hub import snapshot_download
 import requests
 
-import argparse
-from omegaconf import OmegaConf
 import cv2
 import torch
-import glob
-import pickle
 from tqdm import tqdm
-import copy
-from argparse import Namespace
-import shutil
 import gdown
 import imageio
-import ffmpeg
-from moviepy.editor import *
+from moviepy.editor import VideoFileClip, AudioFileClip
 
 # Define paths for project and checkpoint directories
 ProjectDir = os.path.abspath(os.path.dirname(__file__))
 CheckpointsDir = os.path.join(ProjectDir, "models")
+
+colorama_init(autoreset=True)
 
 def print_directory_contents(path):
     """Prints the contents of a directory recursively."""
@@ -45,7 +74,7 @@ def download_model():
     """
     if not os.path.exists(CheckpointsDir):
         os.makedirs(CheckpointsDir)
-        print("Checkpoint Not Downloaded, start downloading...")
+        print(Fore.RED+"### Checkpoint Not Downloaded, start downloading...")
         tic = time.time()
 
         # Download MuseTalk model from HuggingFace
@@ -105,10 +134,10 @@ def download_model():
             print(f"Request failed with status code: {response.status_code}")
 
         toc = time.time()
-        print(f"Download completed in {toc-tic} seconds")
+        print(f"### Download completed in {toc-tic} seconds")
         print_directory_contents(CheckpointsDir)
     else:
-        print("Model already downloaded.")
+        print(Fore.GREEN+"### Model already downloaded.")
 
 # Automatically download models when script is run
 download_model()
@@ -120,7 +149,7 @@ from musetalk.utils.utils import load_all_model
 
 @spaces.GPU(duration=600)
 @torch.no_grad()
-def inference(audio_path, video_path, bbox_shift, progress=gr.Progress(track_tqdm=True)):
+def inference(audio_path, video_path, bbox_shift, progress=gr.Progress(track_tqdm=True), force_fps=30):
     """
     Generates a synchronized talking video based on input audio and reference video.
 
@@ -138,6 +167,7 @@ def inference(audio_path, video_path, bbox_shift, progress=gr.Progress(track_tqd
         "result_dir": './results/output', "fps": 25, "batch_size": 8,
         "output_vid_name": '', "use_saved_coord": False
     }
+    print(Fore.BLACK+Back.BLUE+">>> inference")
     args = Namespace(**args_dict)
 
     input_basename = os.path.basename(video_path).split('.')[0]
