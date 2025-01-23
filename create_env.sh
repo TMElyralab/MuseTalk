@@ -5,6 +5,7 @@ conda create -n musetalk python==3.10 -y
 conda activate musetalk
 pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu118
 pip install -r requirements.txt
+pip install huggingface_hub==0.25.2
 pip install --no-cache-dir -U openmim 
 mim install mmengine 
 mim install "mmcv>=2.0.1" 
