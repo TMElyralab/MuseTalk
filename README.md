@@ -129,6 +129,7 @@ https://github.com/user-attachments/assets/b011ece9-a332-4bc1-b8b7-ef6e383d7bde
 - [x] [technical report](https://arxiv.org/abs/2410.10122v2).
 - [x] a better model with updated [technical report](https://arxiv.org/abs/2410.10122).
 - [ ] training and dataloader code (Expected completion on 04/04/2025).
+- [ ] realtime inference code for 1.5 version (Note: MuseTalk 1.5 has the same computation time as 1.0 and supports real-time inference. The code implementation will be released soon).
 
 
 
@@ -328,8 +329,9 @@ python -m scripts.inference --inference_config configs/inference/test.yaml --bbo
 
 As a complete solution to virtual human generation, you are suggested to first apply [MuseV](https://github.com/TMElyralab/MuseV) to generate a video (text-to-video, image-to-video or pose-to-video) by referring [this](https://github.com/TMElyralab/MuseV?tab=readme-ov-file#text2video). Frame interpolation is suggested to increase frame rate. Then, you can use `MuseTalk` to generate a lip-sync video by referring [this](https://github.com/TMElyralab/MuseTalk?tab=readme-ov-file#inference).
 
-#### :new: Real-time inference
+#### Real-time inference
 
+<details close>
 Here, we provide the inference script. This script first applies necessary pre-processing such as face detection, face parsing and VAE encode in advance. During inference, only UNet and the VAE decoder are involved, which makes MuseTalk real-time.
 
 ```
@@ -351,6 +353,7 @@ configs/inference/realtime.yaml is the path to the real-time inference configura
 ```
 python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml --skip_save_images
 ```
+</details>
 
 # Acknowledgement
 1. We thank open-source components like [whisper](https://github.com/openai/whisper), [dwpose](https://github.com/IDEA-Research/DWPose), [face-alignment](https://github.com/1adrianb/face-alignment), [face-parsing](https://github.com/zllrunning/face-parsing.PyTorch), [S3FD](https://github.com/yxlijun/S3FD.pytorch). 
