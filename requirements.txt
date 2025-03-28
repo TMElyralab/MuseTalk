@@ -9,6 +9,7 @@ tensorboard==2.12.0
 opencv-python==4.9.0.80
 soundfile==0.12.1
 transformers==4.39.2
+huggingface_hub==0.25.0
 
 gdown
 requests
