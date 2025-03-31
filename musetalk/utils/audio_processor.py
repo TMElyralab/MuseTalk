@@ -91,7 +91,7 @@ class AudioProcessor:
 
 if __name__ == "__main__":
     audio_processor = AudioProcessor()
-    wav_path = "/cfs-workspace/users/gozhong/codes/musetalk_opensource2/data/audio/2.wav"
+    wav_path = "./2.wav"
     audio_feature, librosa_feature_length = audio_processor.get_audio_feature(wav_path)
     print("Audio Feature shape:", audio_feature.shape)
     print("librosa_feature_length:", librosa_feature_length)
