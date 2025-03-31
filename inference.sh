@@ -20,9 +20,11 @@ config_path="./configs/inference/test.yaml"
 if [ "$version" = "v1.0" ]; then
     model_dir="./models/musetalk"
     unet_model_path="$model_dir/pytorch_model.bin"
+    unet_config="$model_dir/musetalk.json"
 elif [ "$version" = "v1.5" ]; then
     model_dir="./models/musetalkV15"
     unet_model_path="$model_dir/unet.pth"
+    unet_config="$model_dir/musetalk.json"
 else
     echo "Invalid version specified. Please use v1.0 or v1.5."
     exit 1
@@ -33,10 +35,12 @@ if [ "$version" = "v1.0" ]; then
     python3 -m scripts.inference \
         --inference_config "$config_path" \
         --result_dir "./results/test" \
-        --unet_model_path "$unet_model_path"
+        --unet_model_path "$unet_model_path" \
+        --unet_config "$unet_config"
 elif [ "$version" = "v1.5" ]; then
     python3 -m scripts.inference_alpha \
         --inference_config "$config_path" \
         --result_dir "./results/test" \
-        --unet_model_path "$unet_model_path"
+        --unet_model_path "$unet_model_path" \
+        --unet_config "$unet_config"
 fi
