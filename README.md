@@ -177,7 +177,7 @@ You can download weights manually as follows:
 
 2. Download the weights of other components:
    - [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse)
-   - [whisper](https://openaipublic.azureedge.net/main/whisper/models/65147644a518d12f04e32d6f3b26facc3f8dd46e5390956a9424a650c0ce22b9/tiny.pt)
+   - [whisper](https://huggingface.co/openai/whisper-tiny/tree/main)
    - [dwpose](https://huggingface.co/yzd-v/DWPose/tree/main)
    - [face-parse-bisent](https://github.com/zllrunning/face-parsing.PyTorch)
    - [resnet18](https://download.pytorch.org/models/resnet18-5c106cde.pth)
@@ -201,7 +201,10 @@ Finally, these weights should be organized in `models` as follows:
 │   ├── config.json
 │   └── diffusion_pytorch_model.bin
 └── whisper
-    └── tiny.pt
+    ├── config.json
+    ├── pytorch_model.bin
+    └── preprocessor_config.json
+    
 ```
 ## Quickstart
 
@@ -210,7 +213,7 @@ We provide inference scripts for both versions of MuseTalk:
 
 #### MuseTalk 1.5 (Recommended)
 ```bash
-python3 -m scripts.inference_alpha --inference_config configs/inference/test.yaml --unet_model_path ./models/musetalkV15/unet.pth
+sh inference.sh v1.5
 ```
 This inference script supports both MuseTalk 1.5 and 1.0 models:
 - For MuseTalk 1.5: Use the command above with the V1.5 model path
@@ -221,7 +224,7 @@ The video_path should be either a video file, an image file or a directory of im
 
 #### MuseTalk 1.0
 ```bash
-python3 -m scripts.inference --inference_config configs/inference/test.yaml
+sh inference.sh v1.0
 ```
 You are recommended to input video with `25fps`, the same fps used when training the model. If your video is far less than 25fps, you are recommended to apply frame interpolation or directly convert the video to 25fps using ffmpeg.
 <details close>
