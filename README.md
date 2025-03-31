@@ -174,6 +174,11 @@ export FFMPEG_PATH=/musetalk/ffmpeg-4.4-amd64-static
 You can download weights manually as follows:
 
 1. Download our trained [weights](https://huggingface.co/TMElyralab/MuseTalk).
+```bash
+# !pip install -U "huggingface_hub[cli]" 
+export HF_ENDPOINT=https://hf-mirror.com 
+huggingface-cli download TMElyralab/MuseTalk --local-dir models/
+```
 
 2. Download the weights of other components:
    - [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse)
