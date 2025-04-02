@@ -128,9 +128,8 @@ https://github.com/user-attachments/assets/b011ece9-a332-4bc1-b8b7-ef6e383d7bde
 - [x] codes for real-time inference.
 - [x] [technical report](https://arxiv.org/abs/2410.10122v2).
 - [x] a better model with updated [technical report](https://arxiv.org/abs/2410.10122).
+- [x] realtime inference code for 1.5 version (Note: MuseTalk 1.5 has the same computation time as 1.0 and supports real-time inference. The code implementation will be released soon).
 - [ ] training and dataloader code (Expected completion on 04/04/2025).
-- [ ] realtime inference code for 1.5 version (Note: MuseTalk 1.5 has the same computation time as 1.0 and supports real-time inference. The code implementation will be released soon).
-
 
 
 # Getting Started
@@ -218,21 +217,52 @@ We provide inference scripts for both versions of MuseTalk:
 
 #### MuseTalk 1.5 (Recommended)
 ```bash
-sh inference.sh v1.5
+# Run MuseTalk 1.5 inference
+sh inference.sh v1.5 normal
 ```
-This inference script supports both MuseTalk 1.5 and 1.0 models:
-- For MuseTalk 1.5: Use the command above with the V1.5 model path
-- For MuseTalk 1.0: Use the same script but point to the V1.0 model path
-
-configs/inference/test.yaml is the path to the inference configuration file, including video_path and audio_path.
-The video_path should be either a video file, an image file or a directory of images. 
 
 #### MuseTalk 1.0
 ```bash
-sh inference.sh v1.0
+# Run MuseTalk 1.0 inference
+sh inference.sh v1.0 normal
 ```
-You are recommended to input video with `25fps`, the same fps used when training the model. If your video is far less than 25fps, you are recommended to apply frame interpolation or directly convert the video to 25fps using ffmpeg.
-<details close>
+
+The inference script supports both MuseTalk 1.5 and 1.0 models:
+- For MuseTalk 1.5: Use the command above with the V1.5 model path
+- For MuseTalk 1.0: Use the same script but point to the V1.0 model path
+
+The configuration file `configs/inference/test.yaml` contains the inference settings, including:
+- `video_path`: Path to the input video, image file, or directory of images
+- `audio_path`: Path to the input audio file
+
+Note: For optimal results, we recommend using input videos with 25fps, which is the same fps used during model training. If your video has a lower frame rate, you can use frame interpolation or convert it to 25fps using ffmpeg.
+
+#### Real-time Inference
+For real-time inference, use the following command:
+```bash
+# Run real-time inference
+sh inference.sh v1.5 realtime  # For MuseTalk 1.5
+# or
+sh inference.sh v1.0 realtime  # For MuseTalk 1.0
+```
+
+The real-time inference configuration is in `configs/inference/realtime.yaml`, which includes:
+- `preparation`: Set to `True` for new avatar preparation
+- `video_path`: Path to the input video
+- `bbox_shift`: Adjustable parameter for mouth region control
+- `audio_clips`: List of audio clips for generation
+
+Important notes for real-time inference:
+1. Set `preparation` to `True` when processing a new avatar
+2. After preparation, the avatar will generate videos using audio clips from `audio_clips`
+3. The generation process can achieve 30fps+ on an NVIDIA Tesla V100
+4. Set `preparation` to `False` for generating more videos with the same avatar
+
+For faster generation without saving images, you can use:
+```bash
+python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml --skip_save_images
+```
+
 ## TestCases For 1.0
 <table class="center">
   <tr style="font-weight: bolder;text-align:center;">
@@ -330,38 +360,10 @@ python -m scripts.inference --inference_config configs/inference/test.yaml --bbo
 ```
 :pushpin: More technical details can be found in [bbox_shift](assets/BBOX_SHIFT.md).
 
-</details>
-
 
 #### Combining MuseV and MuseTalk
 
 As a complete solution to virtual human generation, you are suggested to first apply [MuseV](https://github.com/TMElyralab/MuseV) to generate a video (text-to-video, image-to-video or pose-to-video) by referring [this](https://github.com/TMElyralab/MuseV?tab=readme-ov-file#text2video). Frame interpolation is suggested to increase frame rate. Then, you can use `MuseTalk` to generate a lip-sync video by referring [this](https://github.com/TMElyralab/MuseTalk?tab=readme-ov-file#inference).
-
-#### Real-time inference
-
-<details close>
-Here, we provide the inference script. This script first applies necessary pre-processing such as face detection, face parsing and VAE encode in advance. During inference, only UNet and the VAE decoder are involved, which makes MuseTalk real-time.
-
-```
-python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml --batch_size 4
-```
-configs/inference/realtime.yaml is the path to the real-time inference configuration file, including `preparation`, `video_path` , `bbox_shift` and `audio_clips`. 
-
-1. Set `preparation` to `True` in `realtime.yaml` to prepare the materials for a new `avatar`. (If the `bbox_shift` has changed, you also need to re-prepare the materials.)
-1. After that, the `avatar` will use an audio clip selected from `audio_clips` to generate video.
-    ```
-    Inferring using: data/audio/yongen.wav
-    ```
-1. While MuseTalk is inferring, sub-threads can simultaneously stream the results to the users. The generation process can achieve 30fps+ on an NVIDIA Tesla V100.
-1. Set `preparation` to `False` and run this script if you want to genrate more videos using the same avatar.
-
-##### Note for Real-time inference
-1. If you want to generate multiple videos using the same avatar/video, you can also use this script to **SIGNIFICANTLY** expedite the generation process.
-1. In the previous script, the generation time is also limited by I/O (e.g. saving images). If you just want to test the generation speed without saving the images, you can run
-```
-python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml --skip_save_images
-```
-</details>
 
 # Acknowledgement
 1. We thank open-source components like [whisper](https://github.com/openai/whisper), [dwpose](https://github.com/IDEA-Research/DWPose), [face-alignment](https://github.com/1adrianb/face-alignment), [face-parsing](https://github.com/zllrunning/face-parsing.PyTorch), [S3FD](https://github.com/yxlijun/S3FD.pytorch). 
