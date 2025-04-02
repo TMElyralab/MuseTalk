@@ -11,7 +11,7 @@ class AudioProcessor:
     def __init__(self, feature_extractor_path="openai/whisper-tiny/"):
         self.feature_extractor = AutoFeatureExtractor.from_pretrained(feature_extractor_path)
         
-    def get_audio_feature(self, wav_path, start_index=0):
+    def get_audio_feature(self, wav_path, start_index=0, weight_dtype=None):
         if not os.path.exists(wav_path):
             return None
         librosa_output, sampling_rate = librosa.load(wav_path, sr=16000)
@@ -27,6 +27,8 @@ class AudioProcessor:
                 return_tensors="pt",
                 sampling_rate=sampling_rate
             ).input_features
+            if weight_dtype is not None:
+                audio_feature = audio_feature.to(dtype=weight_dtype)
             features.append(audio_feature)
 
         return features, len(librosa_output)

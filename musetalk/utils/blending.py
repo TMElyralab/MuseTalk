@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import copy
 
+
 def get_crop_box(box, expand):
     x, y, x1, y1 = box
     x_c, y_c = (x+x1)//2, (y+y1)//2
@@ -11,7 +12,8 @@ def get_crop_box(box, expand):
     crop_box = [x_c-s, y_c-s, x_c+s, y_c+s]
     return crop_box, s
 
-def face_seg(image, mode="jaw", fp=None):
+
+def face_seg(image, mode="raw", fp=None):
     """
     对图像进行面部解析，生成面部区域的掩码。
 
@@ -86,14 +88,12 @@ def get_image(image, face, face_box, upper_boundary_ratio=0.5, expand=1.5, mode=
     
     body.paste(face_large, crop_box[:2], mask_image)
     
-    # 不用掩码，完全用infer
-    #face_large.save("debug/checkpoint_6_face_large.png")
-
     body = np.array(body)  # 将 PIL 图像转换回 numpy 数组
 
     return body[:, :, ::-1]  # 返回处理后的图像（BGR 转 RGB）
 
-def get_image_blending(image,face,face_box,mask_array,crop_box):
+
+def get_image_blending(image, face, face_box, mask_array, crop_box):
     body = Image.fromarray(image[:,:,::-1])
     face = Image.fromarray(face[:,:,::-1])
 
@@ -108,7 +108,8 @@ def get_image_blending(image,face,face_box,mask_array,crop_box):
     body = np.array(body)
     return body[:,:,::-1]
 
-def get_image_prepare_material(image,face_box,upper_boundary_ratio = 0.5,expand=1.2):
+
+def get_image_prepare_material(image, face_box, upper_boundary_ratio=0.5, expand=1.5, fp=None, mode="raw"):
     body = Image.fromarray(image[:,:,::-1])
 
     x, y, x1, y1 = face_box
@@ -119,7 +120,7 @@ def get_image_prepare_material(image,face_box,upper_boundary_ratio = 0.5,expand=
     face_large = body.crop(crop_box)
     ori_shape = face_large.size
 
-    mask_image = face_seg(face_large)
+    mask_image = face_seg(face_large, mode=mode, fp=fp)
     mask_small = mask_image.crop((x-x_s, y-y_s, x1-x_s, y1-y_s))
     mask_image = Image.new('L', ori_shape, 0)
     mask_image.paste(mask_small, (x-x_s, y-y_s, x1-x_s, y1-y_s))
@@ -132,4 +133,4 @@ def get_image_prepare_material(image,face_box,upper_boundary_ratio = 0.5,expand=
 
     blur_kernel_size = int(0.1 * ori_shape[0] // 2 * 2) + 1
     mask_array = cv2.GaussianBlur(np.array(modified_mask_image), (blur_kernel_size, blur_kernel_size), 0)
-    return mask_array,crop_box
+    return mask_array, crop_box
