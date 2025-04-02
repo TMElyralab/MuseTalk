@@ -60,14 +60,12 @@ cmd_args="--inference_config $config_path \
     --unet_model_path $unet_model_path \
     --unet_config $unet_config \
     --version $version_arg \
-    --gpu_id 7"
 
 # Add realtime-specific arguments if in realtime mode
 if [ "$mode" = "realtime" ]; then
     cmd_args="$cmd_args \
     --fps 25 \
     --version $version_arg \
-    --gpu_id 7"
 fi
 
 # Run inference
