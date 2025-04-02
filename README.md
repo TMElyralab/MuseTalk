@@ -130,8 +130,8 @@ https://github.com/user-attachments/assets/b011ece9-a332-4bc1-b8b7-ef6e383d7bde
 - [x] codes for real-time inference.
 - [x] [technical report](https://arxiv.org/abs/2410.10122v2).
 - [x] a better model with updated [technical report](https://arxiv.org/abs/2410.10122).
-- [x] realtime inference code for 1.5 version (Note: MuseTalk 1.5 has the same computation time as 1.0 and supports real-time inference. The code implementation will be released soon).
-- [ ] training and dataloader code (Expected completion on 04/04/2025).
+- [x] realtime inference code for 1.5 version.
+- [x] training and dataloader code.
 
 
 # Getting Started
