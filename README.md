@@ -23,7 +23,9 @@ We introduce `MuseTalk`, a **real-time high quality** lip-syncing model (30fps+ 
 ## 🔥 Updates
 We're excited to unveil MuseTalk 1.5. 
 This version **(1)** integrates training with perceptual loss, GAN loss, and sync loss, significantly boosting its overall performance. **(2)** We've implemented a two-stage training strategy and a spatio-temporal data sampling approach to strike a balance between visual quality and lip-sync accuracy. 
-Learn more details [here](https://arxiv.org/abs/2410.10122)
+Learn more details [here](https://arxiv.org/abs/2410.10122).
+The inference code and model weights of MuseTalk 1.5 are now available, with the training code set to be released soon. 
+Stay tuned! 🚀
 
 # Overview
 `MuseTalk` is a real-time high quality audio-driven lip-syncing model trained in the latent space of `ft-mse-vae`, which
