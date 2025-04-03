@@ -131,7 +131,7 @@ https://github.com/user-attachments/assets/b011ece9-a332-4bc1-b8b7-ef6e383d7bde
 - [x] [technical report](https://arxiv.org/abs/2410.10122v2).
 - [x] a better model with updated [technical report](https://arxiv.org/abs/2410.10122).
 - [x] realtime inference code for 1.5 version.
-- [x] training and dataloader code.
+- [] training and dataloader code. (Expected completion on 04/04/2025).
 
 
 # Getting Started
