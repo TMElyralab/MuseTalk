@@ -557,7 +557,7 @@ if __name__ == '__main__':
         'contorl_face_min_size': True,  # Whether to enforce minimum face size
         'padding_pixel_mouth': 10,  # Padding pixels around mouth region in mask
         'min_face_size': 200,  # Minimum face size requirement for dataset
-        'whisper_path': "/cfs-workspace/users/gozhong/models/whisper-tiny",  # Path to Whisper model
+        'whisper_path': "./models/whisper",  # Path to Whisper model
         'cropping_jaw2edge_margin_mean': 10,  # Mean margin for jaw-to-edge cropping
         'cropping_jaw2edge_margin_std': 10,  # Standard deviation for jaw-to-edge cropping
         'crop_type': "dynamic_margin_crop_resize",  # Type of cropping: "crop_resize", "dynamic_margin_crop_resize", or "resize"
