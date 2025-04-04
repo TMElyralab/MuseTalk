@@ -288,7 +288,6 @@ def main(cfg):
     os.makedirs(os.path.dirname(cfg.video_clip_file_list_val), exist_ok=True)
 
     vid_list = os.listdir(cfg.video_root_raw)
-    vid_list = vid_list[:100] # pick 100 videos for test
     sorted_vid_list = sorted(vid_list)
  
     # Save video file list
