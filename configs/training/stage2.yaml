@@ -1,0 +1,89 @@
+exp_name: 'test'  # Name of the experiment
+output_dir: './exp_out/stage2/'  # Directory to save experiment outputs
+unet_sub_folder: musetalk  # Subfolder name for UNet model
+random_init_unet: False  # Whether to randomly initialize UNet (stage1) or use pretrained weights (stage2)
+whisper_path: "./models/whisper"  # Path to the Whisper model
+pretrained_model_name_or_path: "./models"  # Path to pretrained models
+resume_from_checkpoint: True  # Whether to resume training from a checkpoint
+padding_pixel_mouth: 10  # Number of pixels to pad around the mouth region
+vae_type: "sd-vae"  # Type of VAE model to use
+# Validation parameters
+num_images_to_keep: 8  # Number of validation images to keep
+ref_dropout_rate: 0  # Dropout rate for reference images
+syncnet_config_path: "./configs/training/syncnet.yaml"  # Path to SyncNet configuration
+use_adapted_weight: False  # Whether to use adapted weights for loss calculation
+cropping_jaw2edge_margin_mean: 10  # Mean margin for jaw-to-edge cropping
+cropping_jaw2edge_margin_std: 10  # Standard deviation for jaw-to-edge cropping
+crop_type: "dynamic_margin_crop_resize"  # Type of cropping method
+random_margin_method: "normal"  # Method for random margin generation
+num_backward_frames: 16  # Number of frames to use for backward pass in SyncNet
+
+data:
+  dataset_key: "HDTF"  # Dataset to use for training
+  train_bs: 2  # Training batch size (actual batch size is train_bs*n_sample_frames)
+  image_size: 256  # Size of input images
+  n_sample_frames: 16  # Number of frames to sample per batch
+  num_workers: 8  # Number of data loading workers
+  audio_padding_length_left: 2  # Left padding length for audio features
+  audio_padding_length_right: 2  # Right padding length for audio features
+  sample_method: pose_similarity_and_mouth_dissimilarity  # Method for sampling frames
+  top_k_ratio: 0.51  # Ratio for top-k sampling
+  contorl_face_min_size: True  # Whether to control minimum face size
+  min_face_size: 200  # Minimum face size in pixels
+
+loss_params:
+  l1_loss: 1.0  # Weight for L1 loss
+  vgg_loss: 0.01  # Weight for VGG perceptual loss
+  vgg_layer_weight: [1, 1, 1, 1, 1]  # Weights for different VGG layers
+  pyramid_scale: [1, 0.5, 0.25, 0.125]  # Scales for image pyramid
+  gan_loss: 0.01  # Weight for GAN loss
+  fm_loss: [1.0, 1.0, 1.0, 1.0]  # Weights for feature matching loss
+  sync_loss: 0.05  # Weight for sync loss
+  mouth_gan_loss: 0.01  # Weight for mouth-specific GAN loss
+
+model_params:
+  discriminator_params:
+    scales: [1]  # Scales for discriminator
+    block_expansion: 32  # Expansion factor for discriminator blocks
+    max_features: 512  # Maximum number of features in discriminator
+    num_blocks: 4  # Number of blocks in discriminator
+    sn: True  # Whether to use spectral normalization
+    image_channel: 3  # Number of image channels
+    estimate_jacobian: False  # Whether to estimate Jacobian
+
+discriminator_train_params:
+  lr: 0.000005  # Learning rate for discriminator
+  eps: 0.00000001  # Epsilon for optimizer
+  weight_decay: 0.01  # Weight decay for optimizer
+  patch_size: 1  # Size of patches for discriminator
+  betas: [0.5, 0.999]  # Beta parameters for Adam optimizer
+  epochs: 10000  # Number of training epochs
+  start_gan: 1000  # Step to start GAN training
+
+solver:
+  gradient_accumulation_steps: 8  # Number of steps for gradient accumulation
+  uncond_steps: 10  # Number of unconditional steps
+  mixed_precision: 'fp32'  # Precision mode for training
+  enable_xformers_memory_efficient_attention: True  # Whether to use memory efficient attention
+  gradient_checkpointing: True  # Whether to use gradient checkpointing
+  max_train_steps: 250000  # Maximum number of training steps
+  max_grad_norm: 1.0  # Maximum gradient norm for clipping
+  # Learning rate parameters
+  learning_rate: 5.0e-6  # Base learning rate
+  scale_lr: False  # Whether to scale learning rate
+  lr_warmup_steps: 1000  # Number of warmup steps for learning rate
+  lr_scheduler: "linear"  # Type of learning rate scheduler
+  # Optimizer parameters
+  use_8bit_adam: False  # Whether to use 8-bit Adam optimizer
+  adam_beta1: 0.5  # Beta1 parameter for Adam optimizer
+  adam_beta2: 0.999  # Beta2 parameter for Adam optimizer
+  adam_weight_decay: 1.0e-2  # Weight decay for Adam optimizer
+  adam_epsilon: 1.0e-8  # Epsilon for Adam optimizer
+
+total_limit: 10  # Maximum number of checkpoints to keep
+save_model_epoch_interval: 250000  # Interval between model saves
+checkpointing_steps: 2000  # Number of steps between checkpoints
+val_freq: 2000  # Frequency of validation
+
+seed: 41  # Random seed for reproducibility
+
