@@ -24,8 +24,7 @@ We introduce `MuseTalk`, a **real-time high quality** lip-syncing model (30fps+ 
 We're excited to unveil MuseTalk 1.5. 
 This version **(1)** integrates training with perceptual loss, GAN loss, and sync loss, significantly boosting its overall performance. **(2)** We've implemented a two-stage training strategy and a spatio-temporal data sampling approach to strike a balance between visual quality and lip-sync accuracy. 
 Learn more details [here](https://arxiv.org/abs/2410.10122).
-The inference code and model weights of MuseTalk 1.5 are now available, with the training code set to be released soon. 
-Stay tuned! 🚀
+**The inference codes, training codes and model weights of MuseTalk 1.5 are all available now!** 🚀
 
 # Overview
 `MuseTalk` is a real-time high quality audio-driven lip-syncing model trained in the latent space of `ft-mse-vae`, which
@@ -37,7 +36,8 @@ Stay tuned! 🚀
 1. checkpoint available trained on the HDTF and private dataset.
 
 # News
-- [03/28/2025] :mega: We are thrilled to announce the release of our 1.5 version. This version is a significant improvement over the 1.0 version, with enhanced clarity, identity consistency, and precise lip-speech synchronization. We update the [technical report](https://arxiv.org/abs/2410.10122) with more details.
+- [04/05/2025] :mega: We are excited to announce that the training code is now open-sourced! You can now train your own MuseTalk model using our provided training scripts and configurations.
+- [03/28/2025] We are thrilled to announce the release of our 1.5 version. This version is a significant improvement over the 1.0 version, with enhanced clarity, identity consistency, and precise lip-speech synchronization. We update the [technical report](https://arxiv.org/abs/2410.10122) with more details.
 - [10/18/2024] We release the [technical report](https://arxiv.org/abs/2410.10122v2). Our report details a superior model to the open-source L1 loss version. It includes GAN and perceptual losses for improved clarity, and sync loss for enhanced performance.
 - [04/17/2024] We release a pipeline that utilizes MuseTalk for real-time inference.
 - [04/16/2024] Release Gradio [demo](https://huggingface.co/spaces/TMElyralab/MuseTalk) on HuggingFace Spaces (thanks to HF team for their community grant)
@@ -336,6 +336,7 @@ Based on our testing on a machine with 8 NVIDIA H20 GPUs:
 | 2          | 2                      | ~80GB          |                |
 | 2          | 8                      | ~85GB          | ✓              |
 
+<details close>
 ## TestCases For 1.0
 <table class="center">
   <tr style="font-weight: bolder;text-align:center;">
