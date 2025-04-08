@@ -64,7 +64,7 @@ class AudioProcessor:
         whisper_feature = whisper_feature[:,:actual_length,...]
 
         # Calculate padding amount
-        padding_nums = math.floor(whisper_idx_multiplier)
+        padding_nums = math.ceil(whisper_idx_multiplier)
         # Add padding at start and end
         whisper_feature = torch.cat([
             torch.zeros_like(whisper_feature[:, :padding_nums * audio_padding_length_left]),
