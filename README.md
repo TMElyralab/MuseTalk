@@ -308,7 +308,7 @@ sh inference.sh v1.0 realtime
 ##### Windows Environment
 ```bash
 # MuseTalk 1.5 (Recommended)
-python -m scripts.realtime_inference --inference_config configs\inference\realtime.yaml --result_dir results\realtime --unet_model_path models\musetalkV15\unet.pth --unet_config models\musetalkV15\musetalk.json --version v15 --fps 25
+python -m scripts.realtime_inference --inference_config configs\inference\realtime.yaml --result_dir results\realtime --unet_model_path models\musetalkV15\unet.pth --unet_config models\musetalkV15\musetalk.json --version v15 --fps 25 --ffmpeg_path ffmpeg-master-latest-win64-gpl-shared\bin
 
 # For MuseTalk 1.0, change:
 # - models\musetalkV15 -> models\musetalk
