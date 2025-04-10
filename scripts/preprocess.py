@@ -12,11 +12,23 @@ from mmpose.structures import merge_data_samples
 import torch
 import numpy as np
 from tqdm import tqdm
+import sys
+
+def fast_check_ffmpeg():
+    try:
+        subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
+        return True
+    except:
+        return False
 
 ffmpeg_path = "./ffmpeg-4.4-amd64-static/"
-if ffmpeg_path not in os.getenv('PATH'):
-    print("add ffmpeg to path")
-    os.environ["PATH"] = f"{ffmpeg_path}:{os.environ['PATH']}"
+if not fast_check_ffmpeg():
+    print("Adding ffmpeg to PATH")
+    # Choose path separator based on operating system
+    path_separator = ';' if sys.platform == 'win32' else ':'
+    os.environ["PATH"] = f"{args.ffmpeg_path}{path_separator}{os.environ['PATH']}"
+    if not fast_check_ffmpeg():
+        print("Warning: Unable to find ffmpeg, please ensure ffmpeg is properly installed")
 
 class AnalyzeFace:
     def __init__(self, device: Union[str, torch.device], config_file: str, checkpoint_file: str):

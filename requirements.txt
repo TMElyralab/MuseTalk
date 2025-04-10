@@ -1,8 +1,4 @@
---extra-index-url https://download.pytorch.org/whl/cu118 
-torch==2.0.1
-torchvision==0.15.2 
-torchaudio==2.0.2
-diffusers==0.27.2
+diffusers==0.30.2
 accelerate==0.28.0
 tensorflow==2.12.0
 tensorboard==2.12.0
@@ -10,13 +6,15 @@ opencv-python==4.9.0.80
 soundfile==0.12.1
 transformers==4.39.2
 huggingface_hub==0.25.0
+librosa==0.11.0
+numpy==1.24.4
+einops==0.8.1
 
 gdown
 requests
 imageio[ffmpeg]
 
+gradio
 omegaconf
 ffmpeg-python
-gradio
-spaces
 moviepy

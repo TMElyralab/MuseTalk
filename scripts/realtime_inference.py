@@ -23,6 +23,15 @@ import shutil
 import threading
 import queue
 import time
+import subprocess
+
+
+def fast_check_ffmpeg():
+    try:
+        subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
+        return True
+    except:
+        return False
 
 
 def video2imgs(vid_path, save_path, ext='.png', cut_frame=10000000):
@@ -331,6 +340,15 @@ if __name__ == "__main__":
                        )
 
     args = parser.parse_args()
+
+    # Configure ffmpeg path
+    if not fast_check_ffmpeg():
+        print("Adding ffmpeg to PATH")
+        # Choose path separator based on operating system
+        path_separator = ';' if sys.platform == 'win32' else ':'
+        os.environ["PATH"] = f"{args.ffmpeg_path}{path_separator}{os.environ['PATH']}"
+        if not fast_check_ffmpeg():
+            print("Warning: Unable to find ffmpeg, please ensure ffmpeg is properly installed")
 
     # Set computing device
     device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
