@@ -179,9 +179,9 @@ Install the MMLab ecosystem packages:
 ```bash
 pip install --no-cache-dir -U openmim 
 mim install mmengine 
-mim install "mmcv>=2.0.1" 
-mim install "mmdet>=3.1.0" 
-mim install "mmpose>=1.1.0" 
+mim install "mmcv==2.0.1" 
+mim install "mmdet==3.1.0" 
+mim install "mmpose==1.1.0" 
 ```
 
 ### Setup FFmpeg
@@ -207,10 +207,7 @@ We provide two scripts for automatic downloading:
 
 For Linux:
 ```bash
-# Make the script executable
-chmod +x download_weights.sh
-# Run the script
-./download_weights.sh
+sh ./download_weights.sh
 ```
 
 For Windows:
