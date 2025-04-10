@@ -49,8 +49,9 @@ class AudioProcessor:
         whisper_feature = []
         # Process multiple 30s mel input features
         for input_feature in whisper_input_features:
-            audio_feats = whisper.encoder(input_feature.to(device), output_hidden_states=True).hidden_states
-            audio_feats = torch.stack(audio_feats, dim=2).to(weight_dtype)
+            input_feature = input_feature.to(device).to(weight_dtype)
+            audio_feats = whisper.encoder(input_feature, output_hidden_states=True).hidden_states
+            audio_feats = torch.stack(audio_feats, dim=2)
             whisper_feature.append(audio_feats)
 
         whisper_feature = torch.cat(whisper_feature, dim=1)

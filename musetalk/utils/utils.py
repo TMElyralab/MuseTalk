@@ -13,9 +13,9 @@ from musetalk.models.unet import UNet,PositionalEncoding
 
 
 def load_all_model(
-    unet_model_path=os.path.join("models", "musetalk", "pytorch_model.bin"),
+    unet_model_path=os.path.join("models", "musetalkV15", "unet.pth"),
     vae_type="sd-vae",
-    unet_config=os.path.join("models", "musetalk", "musetalk.json"),
+    unet_config=os.path.join("models", "musetalkV15", "musetalk.json"),
     device=None,
 ):
     vae = VAE(

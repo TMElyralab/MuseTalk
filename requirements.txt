@@ -15,6 +15,7 @@ requests
 imageio[ffmpeg]
 
 gradio
+spaces
 omegaconf
 ffmpeg-python
 moviepy

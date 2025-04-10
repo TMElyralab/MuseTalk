@@ -330,6 +330,18 @@ For faster generation without saving images, you can use:
 python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml --skip_save_images
 ```
 
+## Gradio Demo
+We provide an intuitive web interface through Gradio for users to easily adjust input parameters. To optimize inference time, users can generate only the **first frame** to fine-tune the best lip-sync parameters, which helps reduce facial artifacts in the final output.
+![para](assets/figs/gradio_2.png)
+For minimum hardware requirements, we tested the system on a Windows environment using an NVIDIA GeForce RTX 3050 Ti Laptop GPU with 4GB VRAM. In fp16 mode, generating an 8-second video takes approximately 5 minutes. ![speed](assets/figs/gradio.png)
+
+Both Linux and Windows users can launch the demo using the following command. Please ensure that the `ffmpeg_path` parameter matches your actual FFmpeg installation path:
+
+```bash
+# You can remove --use_float16 for better quality, but it will increase VRAM usage and inference time
+python app.py --use_float16 --ffmpeg_path ffmpeg-master-latest-win64-gpl-shared\bin
+```
+
 ## Training
 
 ### Data Preparation
