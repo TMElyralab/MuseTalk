@@ -177,11 +177,11 @@ pip install -r requirements.txt
 Install the MMLab ecosystem packages:
 
 ```bash
-pip install --no-cache-dir -U openmim 
-mim install mmengine 
-mim install "mmcv==2.0.1" 
-mim install "mmdet==3.1.0" 
-mim install "mmpose==1.1.0" 
+pip install --no-cache-dir -U openmim
+mim install mmengine
+mim install "mmcv==2.0.1"
+mim install "mmdet==3.1.0"
+mim install "mmpose==1.1.0"
 ```
 
 ### Setup FFmpeg

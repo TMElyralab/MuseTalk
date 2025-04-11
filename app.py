@@ -4,7 +4,6 @@ import pdb
 import re
 
 import gradio as gr
-import spaces
 import numpy as np
 import sys
 import subprocess
@@ -181,7 +180,6 @@ def fast_check_ffmpeg():
         return False
 
 
-@spaces.GPU(duration=600)
 @torch.no_grad()
 def inference(audio_path, video_path, bbox_shift, extra_margin=10, parsing_mode="jaw", 
               left_cheek_width=90, right_cheek_width=90, progress=gr.Progress(track_tqdm=True)):
