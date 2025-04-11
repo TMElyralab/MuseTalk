@@ -73,38 +73,45 @@ echo "mmlab packages installed successfully."
 echo "Installing huggingface_hub CLI..."
 pip install -U "huggingface_hub[cli]" 2>&1 | tee logs/hf_install.log
 
-# Check and setup ffmpeg only if needed
-echo "Checking for ffmpeg..."
-ffmpeg_installed=false
-
-# Check if ffmpeg is in PATH
-if command -v ffmpeg &> /dev/null; then
-    echo "ffmpeg is already installed in system PATH."
+# Check if running in Docker
+if [ -f "/.dockerenv" ]; then
+    echo "Running in Docker container, skipping system-level installations..."
     ffmpeg_installed=true
-    system_ffmpeg_path=$(which ffmpeg | xargs dirname)
-    echo "System ffmpeg found at: $system_ffmpeg_path"
-    echo "export FFMPEG_PATH=$system_ffmpeg_path" >> ~/.bashrc
-    export FFMPEG_PATH=$system_ffmpeg_path
-fi
+    export FFMPEG_PATH=/usr/bin
+else
+    # Original ffmpeg installation logic
+    echo "Checking for ffmpeg..."
+    ffmpeg_installed=false
 
-# Check if our local ffmpeg directory already exists and contains the binary
-if [ -f "ffmpeg-4.4-amd64-static/ffmpeg" ] && [ -f "ffmpeg-4.4-amd64-static/ffprobe" ]; then
-    echo "Local ffmpeg installation found."
-    ffmpeg_installed=true
-    echo "export FFMPEG_PATH=$(pwd)/ffmpeg-4.4-amd64-static" >> ~/.bashrc
-    export FFMPEG_PATH=$(pwd)/ffmpeg-4.4-amd64-static
-fi
+    # Check if ffmpeg is in PATH
+    if command -v ffmpeg &> /dev/null; then
+        echo "ffmpeg is already installed in system PATH."
+        ffmpeg_installed=true
+        system_ffmpeg_path=$(which ffmpeg | xargs dirname)
+        echo "System ffmpeg found at: $system_ffmpeg_path"
+        echo "export FFMPEG_PATH=$system_ffmpeg_path" >> ~/.bashrc
+        export FFMPEG_PATH=$system_ffmpeg_path
+    fi
 
-# Download and setup ffmpeg if not found
-if [ "$ffmpeg_installed" = false ]; then
-    echo "Setting up ffmpeg..."
-    mkdir -p ffmpeg-4.4-amd64-static
-    wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -O ffmpeg.tar.xz
-    tar -xf ffmpeg.tar.xz --strip-components=1 -C ffmpeg-4.4-amd64-static
-    rm ffmpeg.tar.xz
-    echo "ffmpeg setup complete."
-    echo "export FFMPEG_PATH=$(pwd)/ffmpeg-4.4-amd64-static" >> ~/.bashrc
-    export FFMPEG_PATH=$(pwd)/ffmpeg-4.4-amd64-static
+    # Check if our local ffmpeg directory already exists and contains the binary
+    if [ -f "ffmpeg-4.4-amd64-static/ffmpeg" ] && [ -f "ffmpeg-4.4-amd64-static/ffprobe" ]; then
+        echo "Local ffmpeg installation found."
+        ffmpeg_installed=true
+        echo "export FFMPEG_PATH=$(pwd)/ffmpeg-4.4-amd64-static" >> ~/.bashrc
+        export FFMPEG_PATH=$(pwd)/ffmpeg-4.4-amd64-static
+    fi
+
+    # Download and setup ffmpeg if not found
+    if [ "$ffmpeg_installed" = false ]; then
+        echo "Setting up ffmpeg..."
+        mkdir -p ffmpeg-4.4-amd64-static
+        wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -O ffmpeg.tar.xz
+        tar -xf ffmpeg.tar.xz --strip-components=1 -C ffmpeg-4.4-amd64-static
+        rm ffmpeg.tar.xz
+        echo "ffmpeg setup complete."
+        echo "export FFMPEG_PATH=$(pwd)/ffmpeg-4.4-amd64-static" >> ~/.bashrc
+        export FFMPEG_PATH=$(pwd)/ffmpeg-4.4-amd64-static
+    fi
 fi
 
 echo "FFMPEG_PATH set to $FFMPEG_PATH"
@@ -151,7 +158,7 @@ echo "Downloading ResNet18 model for face parsing..."
 wget -q https://download.pytorch.org/models/resnet18-5c106cde.pth -O models/face-parse-bisent/resnet18-5c106cde.pth
 
 echo "Downloading Face-Parse-BiSeNet model..."
-wget -q https://github.com/zllrunning/face-parsing.PyTorch/raw/master/res/cp/79999_iter.pth -O models/face-parse-bisent/79999_iter.pth 2>&1 | tee -a logs/model_download.log
+gdown 'https://drive.google.com/uc?id=154JgKpzCPW82qINcVieuPH3fZ2e0P812' -O models/face-parse-bisent/79999_iter.pth
 
 # Deactivate virtual environment
 # deactivate
