@@ -1,0 +1,19 @@
+# This file is modified from LatentSync (https://github.com/bytedance/LatentSync/blob/main/latentsync/configs/training/syncnet_16_pixel.yaml).
+model:
+  audio_encoder: # input (1, 80, 52)
+    in_channels: 1
+    block_out_channels: [32, 64, 128, 256, 512, 1024, 2048]
+    downsample_factors: [[2, 1], 2, 2, 1, 2, 2, [2, 3]]
+    attn_blocks: [0, 0, 0, 0, 0, 0, 0]
+    dropout: 0.0
+  visual_encoder: # input (48, 128, 256)
+    in_channels: 48
+    block_out_channels: [64, 128, 256, 256, 512, 1024, 2048, 2048]
+    downsample_factors: [[1, 2], 2, 2, 2, 2, 2, 2, 2]
+    attn_blocks: [0, 0, 0, 0, 0, 0, 0, 0]
+    dropout: 0.0
+
+ckpt:
+  resume_ckpt_path: ""
+  inference_ckpt_path: ./models/syncnet/latentsync_syncnet.pt # this pretrained model is from LatentSync (https://huggingface.co/ByteDance/LatentSync/tree/main)
+  save_ckpt_steps: 2500

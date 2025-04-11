@@ -1,0 +1,21 @@
+compute_environment: LOCAL_MACHINE
+debug: True
+deepspeed_config:
+  offload_optimizer_device: none
+  offload_param_device: none
+  zero3_init_flag: False
+  zero_stage: 2
+  
+distributed_type: DEEPSPEED
+downcast_bf16: 'no'
+gpu_ids: "5, 7" # modify this according to your GPU number
+machine_rank: 0
+main_training_function: main
+num_machines: 1
+num_processes: 2 # it should be the same as the number of GPUs
+rdzv_backend: static
+same_network: true
+tpu_env: []
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false
