@@ -1,0 +1,31 @@
+clip_len_second: 30 # the length of the video clip
+video_root_raw: "./dataset/HDTF/source/" # the path of the original video
+val_list_hdtf:
+  - RD_Radio7_000
+  - RD_Radio8_000
+  - RD_Radio9_000
+  - WDA_TinaSmith_000
+  - WDA_TomCarper_000
+  - WDA_TomPerez_000
+  - WDA_TomUdall_000
+  - WDA_VeronicaEscobar0_000
+  - WDA_VeronicaEscobar1_000
+  - WDA_WhipJimClyburn_000
+  - WDA_XavierBecerra_000
+  - WDA_XavierBecerra_001
+  - WDA_XavierBecerra_002
+  - WDA_ZoeLofgren_000
+  - WRA_SteveScalise1_000
+  - WRA_TimScott_000
+  - WRA_ToddYoung_000
+  - WRA_TomCotton_000
+  - WRA_TomPrice_000
+  - WRA_VickyHartzler_000
+
+# following dir will be automatically generated
+video_root_25fps: "./dataset/HDTF/video_root_25fps/"
+video_file_list: "./dataset/HDTF/video_file_list.txt"
+video_audio_clip_root:  "./dataset/HDTF/video_audio_clip_root/"
+meta_root: "./dataset/HDTF/meta/"
+video_clip_file_list_train: "./dataset/HDTF/train.txt"
+video_clip_file_list_val: "./dataset/HDTF/val.txt"

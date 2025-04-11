@@ -9,3 +9,7 @@ results/
 **/__pycache__/
 *.py[cod]
 *$py.class
+dataset/
+ffmpeg*
+debug
+exp_out
