@@ -20,3 +20,6 @@ ffmpeg-python
 gradio
 spaces
 moviepy
+librosa
+numpy==1.23.5
+einops

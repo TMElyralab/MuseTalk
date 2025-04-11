@@ -9,3 +9,6 @@ results/
 **/__pycache__/
 *.py[cod]
 *$py.class
+musetalk_env/*
+ffmpeg-4.4-amd64-static/*
+models/*
