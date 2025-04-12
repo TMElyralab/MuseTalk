@@ -225,7 +225,7 @@ You can also download the weights manually from the following links:
    - [whisper](https://huggingface.co/openai/whisper-tiny/tree/main)
    - [dwpose](https://huggingface.co/yzd-v/DWPose/tree/main)
    - [syncnet](https://huggingface.co/ByteDance/LatentSync/tree/main)
-   - [face-parse-bisent](https://github.com/zllrunning/face-parsing.PyTorch)
+   - [face-parse-bisent](https://drive.google.com/file/d/154JgKpzCPW82qINcVieuPH3fZ2e0P812/view?pli=1)
    - [resnet18](https://download.pytorch.org/models/resnet18-5c106cde.pth)
 
 Finally, these weights should be organized in `models` as follows:
