@@ -5,11 +5,14 @@
 *.pyc
 .ipynb_checkpoints
 results/
-./models
+models/
 **/__pycache__/
 *.py[cod]
 *$py.class
 dataset/
 ffmpeg*
+ffmprobe*
+ffplay*
 debug
 exp_out
+.gradio
