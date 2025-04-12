@@ -64,7 +64,7 @@ echo "Python requirements installed successfully."
 echo "Installing mmlab packages..."
 pip install --no-cache-dir -U openmim 2>&1 | tee logs/mim_install.log
 mim install mmengine 2>&1 | tee -a logs/mim_install.log
-mim install "mmcv>=2.0.1" 2>&1 | tee -a logs/mim_install.log
+mim install mmcv==2.1.0
 mim install "mmdet>=3.1.0" 2>&1 | tee -a logs/mim_install.log
 mim install "mmpose>=1.1.0" 2>&1 | tee -a logs/mim_install.log
 echo "mmlab packages installed successfully."
@@ -131,7 +131,7 @@ mkdir -p models/musetalk
 mkdir -p models/musetalkV15
 mkdir -p models/dwpose
 mkdir -p models/face-parse-bisent
-mkdir -p models/sd-vae-ft-mse
+mkdir -p models/sd-vae
 mkdir -p models/whisper
 
 # Download model weights
@@ -143,7 +143,7 @@ huggingface-cli download TMElyralab/MuseTalk --local-dir models/ 2>&1 | tee logs
 
 # Download other components
 echo "Downloading SD-VAE-FT-MSE..."
-huggingface-cli download stabilityai/sd-vae-ft-mse --local-dir models/sd-vae-ft-mse --include "config.json" "diffusion_pytorch_model.bin" 2>&1 | tee -a logs/model_download.log
+huggingface-cli download stabilityai/sd-vae-ft-mse --local-dir models/sd-vae --include "config.json" "diffusion_pytorch_model.bin" 2>&1 | tee -a logs/model_download.log
 
 echo "Downloading Whisper tiny model..."
 huggingface-cli download openai/whisper-tiny --local-dir models/whisper --include "config.json" "pytorch_model.bin" "preprocessor_config.json" 2>&1 | tee -a logs/model_download.log

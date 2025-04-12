@@ -24,3 +24,5 @@ librosa
 numpy==1.23.5
 einops
 numba==0.57.0
+huggingface_hub==0.25.2
+peft==0.10.0

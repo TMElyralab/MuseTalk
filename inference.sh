@@ -64,8 +64,9 @@ cmd_args="--inference_config $config_path \
 # Add realtime-specific arguments if in realtime mode
 if [ "$mode" = "realtime" ]; then
     cmd_args="$cmd_args \
-    --fps 8 \
-    --version $version_arg"
+    --fps 24 \
+    --version $version_arg \
+    --batch_size 4"
 fi
 
 # Run inference
