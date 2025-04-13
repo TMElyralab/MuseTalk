@@ -23,6 +23,15 @@ import shutil
 import threading
 import queue
 import time
+import subprocess
+
+
+def fast_check_ffmpeg():
+    try:
+        subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
+        return True
+    except:
+        return False
 
 
 def video2imgs(vid_path, save_path, ext='.png', cut_frame=10000000):
@@ -318,7 +327,7 @@ if __name__ == "__main__":
     parser.add_argument("--fps", type=int, default=25, help="Video frames per second")
     parser.add_argument("--audio_padding_length_left", type=int, default=2, help="Left padding length for audio")
     parser.add_argument("--audio_padding_length_right", type=int, default=2, help="Right padding length for audio")
-    parser.add_argument("--batch_size", type=int, default=25, help="Batch size for inference")
+    parser.add_argument("--batch_size", type=int, default=20, help="Batch size for inference")
     parser.add_argument("--output_vid_name", type=str, default=None, help="Name of output video file")
     parser.add_argument("--use_saved_coord", action="store_true", help='Use saved coordinates to save time')
     parser.add_argument("--saved_coord", action="store_true", help='Save coordinates for future use')
@@ -331,6 +340,15 @@ if __name__ == "__main__":
                        )
 
     args = parser.parse_args()
+
+    # Configure ffmpeg path
+    if not fast_check_ffmpeg():
+        print("Adding ffmpeg to PATH")
+        # Choose path separator based on operating system
+        path_separator = ';' if sys.platform == 'win32' else ':'
+        os.environ["PATH"] = f"{args.ffmpeg_path}{path_separator}{os.environ['PATH']}"
+        if not fast_check_ffmpeg():
+            print("Warning: Unable to find ffmpeg, please ensure ffmpeg is properly installed")
 
     # Set computing device
     device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")

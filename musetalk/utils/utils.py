@@ -8,26 +8,18 @@ from einops import rearrange
 import shutil
 import os.path as osp
 
-ffmpeg_path = os.getenv('FFMPEG_PATH')
-if ffmpeg_path is None:
-    print("please download ffmpeg-static and export to FFMPEG_PATH. \nFor example: export FFMPEG_PATH=/musetalk/ffmpeg-4.4-amd64-static")
-elif ffmpeg_path not in os.getenv('PATH'):
-    print("add ffmpeg to path")
-    os.environ["PATH"] = f"{ffmpeg_path}:{os.environ['PATH']}"
-
-    
 from musetalk.models.vae import VAE
 from musetalk.models.unet import UNet,PositionalEncoding
 
 
 def load_all_model(
-    unet_model_path="./models/musetalk/pytorch_model.bin",
-    vae_type="sd-vae-ft-mse",
-    unet_config="./models/musetalk/musetalk.json",
+    unet_model_path=os.path.join("models", "musetalkV15", "unet.pth"),
+    vae_type="sd-vae",
+    unet_config=os.path.join("models", "musetalkV15", "musetalk.json"),
     device=None,
 ):
     vae = VAE(
-        model_path = f"./models/{vae_type}/",
+        model_path = os.path.join("models", vae_type),
     )
     print(f"load unet model from {unet_model_path}")
     unet = UNet(
