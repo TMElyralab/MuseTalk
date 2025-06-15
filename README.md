@@ -24,8 +24,7 @@ We introduce `MuseTalk`, a **real-time high quality** lip-syncing model (30fps+ 
 We're excited to unveil MuseTalk 1.5. 
 This version **(1)** integrates training with perceptual loss, GAN loss, and sync loss, significantly boosting its overall performance. **(2)** We've implemented a two-stage training strategy and a spatio-temporal data sampling approach to strike a balance between visual quality and lip-sync accuracy. 
 Learn more details [here](https://arxiv.org/abs/2410.10122).
-The inference code and model weights of MuseTalk 1.5 are now available, with the training code set to be released soon. 
-Stay tuned! 🚀
+**The inference codes, training codes and model weights of MuseTalk 1.5 are all available now!** 🚀
 
 # Overview
 `MuseTalk` is a real-time high quality audio-driven lip-syncing model trained in the latent space of `ft-mse-vae`, which
@@ -37,7 +36,8 @@ Stay tuned! 🚀
 1. checkpoint available trained on the HDTF and private dataset.
 
 # News
-- [03/28/2025] :mega: We are thrilled to announce the release of our 1.5 version. This version is a significant improvement over the 1.0 version, with enhanced clarity, identity consistency, and precise lip-speech synchronization. We update the [technical report](https://arxiv.org/abs/2410.10122) with more details.
+- [04/05/2025] :mega: We are excited to announce that the training code is now open-sourced! You can now train your own MuseTalk model using our provided training scripts and configurations.
+- [03/28/2025] We are thrilled to announce the release of our 1.5 version. This version is a significant improvement over the 1.0 version, with enhanced clarity, identity consistency, and precise lip-speech synchronization. We update the [technical report](https://arxiv.org/abs/2410.10122) with more details.
 - [10/18/2024] We release the [technical report](https://arxiv.org/abs/2410.10122v2). Our report details a superior model to the open-source L1 loss version. It includes GAN and perceptual losses for improved clarity, and sync loss for enhanced performance.
 - [04/17/2024] We release a pipeline that utilizes MuseTalk for real-time inference.
 - [04/16/2024] Release Gradio [demo](https://huggingface.co/spaces/TMElyralab/MuseTalk) on HuggingFace Spaces (thanks to HF team for their community grant)
@@ -130,8 +130,9 @@ https://github.com/user-attachments/assets/b011ece9-a332-4bc1-b8b7-ef6e383d7bde
 - [x] codes for real-time inference.
 - [x] [technical report](https://arxiv.org/abs/2410.10122v2).
 - [x] a better model with updated [technical report](https://arxiv.org/abs/2410.10122).
-- [x] realtime inference code for 1.5 version (Note: MuseTalk 1.5 has the same computation time as 1.0 and supports real-time inference. The code implementation will be released soon).
-- [ ] training and dataloader code (Expected completion on 04/04/2025).
+- [x] realtime inference code for 1.5 version.
+- [x] training and data preprocessing codes. 
+- [ ] **always** welcome to submit issues and PRs to improve this repository! 😊
 
 
 # Getting Started
@@ -145,49 +146,87 @@ We also hope you note that we have not verified, maintained, or updated third-pa
 
 ## Installation
 To prepare the Python environment and install additional packages such as opencv, diffusers, mmcv, etc., please follow the steps below:
-### Build environment
 
-We recommend a python version >=3.10 and cuda version =11.7. Then build environment as follows:
+### Build environment
+We recommend Python 3.10 and CUDA 11.7. Set up your environment as follows:
+
+```shell
+conda create -n MuseTalk python==3.10
+conda activate MuseTalk
+```
+
+### Install PyTorch 2.0.1
+Choose one of the following installation methods:
+
+```shell
+# Option 1: Using pip
+pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+
+# Option 2: Using conda
+conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 -c pytorch -c nvidia
+```
+
+### Install Dependencies
+Install the remaining required packages:
 
 ```shell
 pip install -r requirements.txt
 ```
 
-### mmlab packages
+### Install MMLab Packages
+Install the MMLab ecosystem packages:
+
 ```bash
-pip install --no-cache-dir -U openmim 
-mim install mmengine 
-mim install "mmcv>=2.0.1" 
-mim install "mmdet>=3.1.0" 
-mim install "mmpose>=1.1.0" 
+pip install --no-cache-dir -U openmim
+mim install mmengine
+mim install "mmcv==2.0.1"
+mim install "mmdet==3.1.0"
+mim install "mmpose==1.1.0"
 ```
 
-### Download ffmpeg-static
-Download the ffmpeg-static and
-```
+### Setup FFmpeg
+1. [Download](https://github.com/BtbN/FFmpeg-Builds/releases) the ffmpeg-static package
+
+2. Configure FFmpeg based on your operating system:
+
+For Linux:
+```bash
 export FFMPEG_PATH=/path/to/ffmpeg
-```
-for example:
-```
+# Example:
 export FFMPEG_PATH=/musetalk/ffmpeg-4.4-amd64-static
 ```
-### Download weights
-You can download weights manually as follows:
 
-1. Download our trained [weights](https://huggingface.co/TMElyralab/MuseTalk).
+For Windows:
+Add the `ffmpeg-xxx\bin` directory to your system's PATH environment variable. Verify the installation by running `ffmpeg -version` in the command prompt - it should display the ffmpeg version information.
+
+### Download weights
+You can download weights in two ways:
+
+#### Option 1: Using Download Scripts
+We provide two scripts for automatic downloading:
+
+For Linux:
 ```bash
-# !pip install -U "huggingface_hub[cli]" 
-export HF_ENDPOINT=https://hf-mirror.com 
-huggingface-cli download TMElyralab/MuseTalk --local-dir models/
+sh ./download_weights.sh
 ```
 
+For Windows:
+```batch
+# Run the script
+download_weights.bat
+```
+
+#### Option 2: Manual Download
+You can also download the weights manually from the following links:
+
+1. Download our trained [weights](https://huggingface.co/TMElyralab/MuseTalk/tree/main)
 2. Download the weights of other components:
-   - [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse)
+   - [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse/tree/main)
    - [whisper](https://huggingface.co/openai/whisper-tiny/tree/main)
    - [dwpose](https://huggingface.co/yzd-v/DWPose/tree/main)
-   - [face-parse-bisent](https://github.com/zllrunning/face-parsing.PyTorch)
+   - [syncnet](https://huggingface.co/ByteDance/LatentSync/tree/main)
+   - [face-parse-bisent](https://drive.google.com/file/d/154JgKpzCPW82qINcVieuPH3fZ2e0P812/view?pli=1)
    - [resnet18](https://download.pytorch.org/models/resnet18-5c106cde.pth)
-
 
 Finally, these weights should be organized in `models` as follows:
 ```
@@ -198,12 +237,14 @@ Finally, these weights should be organized in `models` as follows:
 ├── musetalkV15
 │   └── musetalk.json
 │   └── unet.pth
+├── syncnet
+│   └── latentsync_syncnet.pt
 ├── dwpose
 │   └── dw-ll_ucoco_384.pth
 ├── face-parse-bisent
 │   ├── 79999_iter.pth
 │   └── resnet18-5c106cde.pth
-├── sd-vae-ft-mse
+├── sd-vae
 │   ├── config.json
 │   └── diffusion_pytorch_model.bin
 └── whisper
@@ -217,42 +258,66 @@ Finally, these weights should be organized in `models` as follows:
 ### Inference
 We provide inference scripts for both versions of MuseTalk:
 
-#### MuseTalk 1.5 (Recommended)
+#### Prerequisites
+Before running inference, please ensure ffmpeg is installed and accessible:
 ```bash
-# Run MuseTalk 1.5 inference
-sh inference.sh v1.5 normal
+# Check ffmpeg installation
+ffmpeg -version
 ```
+If ffmpeg is not found, please install it first:
+- Windows: Download from [ffmpeg-static](https://github.com/BtbN/FFmpeg-Builds/releases) and add to PATH
+- Linux: `sudo apt-get install ffmpeg`
 
-#### MuseTalk 1.0
+#### Normal Inference
+##### Linux Environment
 ```bash
-# Run MuseTalk 1.0 inference
+# MuseTalk 1.5 (Recommended)
+sh inference.sh v1.5 normal
+
+# MuseTalk 1.0
 sh inference.sh v1.0 normal
 ```
 
-The inference script supports both MuseTalk 1.5 and 1.0 models:
-- For MuseTalk 1.5: Use the command above with the V1.5 model path
-- For MuseTalk 1.0: Use the same script but point to the V1.0 model path
+##### Windows Environment
+
+Please ensure that you set the `ffmpeg_path` to match the actual location of your FFmpeg installation.
+
+```bash
+# MuseTalk 1.5 (Recommended)
+python -m scripts.inference --inference_config configs\inference\test.yaml --result_dir results\test --unet_model_path models\musetalkV15\unet.pth --unet_config models\musetalkV15\musetalk.json --version v15 --ffmpeg_path ffmpeg-master-latest-win64-gpl-shared\bin
+
+# For MuseTalk 1.0, change:
+# - models\musetalkV15 -> models\musetalk
+# - unet.pth -> pytorch_model.bin
+# - --version v15 -> --version v1
+```
+
+#### Real-time Inference
+##### Linux Environment
+```bash
+# MuseTalk 1.5 (Recommended)
+sh inference.sh v1.5 realtime
+
+# MuseTalk 1.0
+sh inference.sh v1.0 realtime
+```
+
+##### Windows Environment
+```bash
+# MuseTalk 1.5 (Recommended)
+python -m scripts.realtime_inference --inference_config configs\inference\realtime.yaml --result_dir results\realtime --unet_model_path models\musetalkV15\unet.pth --unet_config models\musetalkV15\musetalk.json --version v15 --fps 25 --ffmpeg_path ffmpeg-master-latest-win64-gpl-shared\bin
+
+# For MuseTalk 1.0, change:
+# - models\musetalkV15 -> models\musetalk
+# - unet.pth -> pytorch_model.bin
+# - --version v15 -> --version v1
+```
 
 The configuration file `configs/inference/test.yaml` contains the inference settings, including:
 - `video_path`: Path to the input video, image file, or directory of images
 - `audio_path`: Path to the input audio file
 
 Note: For optimal results, we recommend using input videos with 25fps, which is the same fps used during model training. If your video has a lower frame rate, you can use frame interpolation or convert it to 25fps using ffmpeg.
-
-#### Real-time Inference
-For real-time inference, use the following command:
-```bash
-# Run real-time inference
-sh inference.sh v1.5 realtime  # For MuseTalk 1.5
-# or
-sh inference.sh v1.0 realtime  # For MuseTalk 1.0
-```
-
-The real-time inference configuration is in `configs/inference/realtime.yaml`, which includes:
-- `preparation`: Set to `True` for new avatar preparation
-- `video_path`: Path to the input video
-- `bbox_shift`: Adjustable parameter for mouth region control
-- `audio_clips`: List of audio clips for generation
 
 Important notes for real-time inference:
 1. Set `preparation` to `True` when processing a new avatar
@@ -265,6 +330,86 @@ For faster generation without saving images, you can use:
 python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml --skip_save_images
 ```
 
+## Gradio Demo
+We provide an intuitive web interface through Gradio for users to easily adjust input parameters. To optimize inference time, users can generate only the **first frame** to fine-tune the best lip-sync parameters, which helps reduce facial artifacts in the final output.
+![para](assets/figs/gradio_2.png)
+For minimum hardware requirements, we tested the system on a Windows environment using an NVIDIA GeForce RTX 3050 Ti Laptop GPU with 4GB VRAM. In fp16 mode, generating an 8-second video takes approximately 5 minutes. ![speed](assets/figs/gradio.png)
+
+Both Linux and Windows users can launch the demo using the following command. Please ensure that the `ffmpeg_path` parameter matches your actual FFmpeg installation path:
+
+```bash
+# You can remove --use_float16 for better quality, but it will increase VRAM usage and inference time
+python app.py --use_float16 --ffmpeg_path ffmpeg-master-latest-win64-gpl-shared\bin
+```
+
+## Training
+
+### Data Preparation
+To train MuseTalk, you need to prepare your dataset following these steps:
+
+1. **Place your source videos** 
+
+   For example, if you're using the HDTF dataset, place all your video files in `./dataset/HDTF/source`.
+
+2. **Run the preprocessing script**
+   ```bash
+   python -m scripts.preprocess --config ./configs/training/preprocess.yaml
+   ```
+   This script will:
+   - Extract frames from videos
+   - Detect and align faces
+   - Generate audio features
+   - Create the necessary data structure for training
+
+### Training Process
+After data preprocessing, you can start the training process:
+
+1. **First Stage**
+   ```bash
+   sh train.sh stage1
+   ```
+
+2. **Second Stage**
+   ```bash
+   sh train.sh stage2
+   ```
+
+### Configuration Adjustment
+Before starting the training, you should adjust the configuration files according to your hardware and requirements:
+
+1. **GPU Configuration** (`configs/training/gpu.yaml`):
+   - `gpu_ids`: Specify the GPU IDs you want to use (e.g., "0,1,2,3")
+   - `num_processes`: Set this to match the number of GPUs you're using
+
+2. **Stage 1 Configuration** (`configs/training/stage1.yaml`):
+   - `data.train_bs`: Adjust batch size based on your GPU memory (default: 32)
+   - `data.n_sample_frames`: Number of sampled frames per video (default: 1)
+
+3. **Stage 2 Configuration** (`configs/training/stage2.yaml`):
+   - `random_init_unet`: Must be set to `False` to use the model from stage 1
+   - `data.train_bs`: Smaller batch size due to high GPU memory cost (default: 2)
+   - `data.n_sample_frames`: Higher value for temporal consistency (default: 16)
+   - `solver.gradient_accumulation_steps`: Increase to simulate larger batch sizes (default: 8)
+  
+
+### GPU Memory Requirements
+Based on our testing on a machine with 8 NVIDIA H20 GPUs:
+
+#### Stage 1 Memory Usage
+| Batch Size | Gradient Accumulation | Memory per GPU | Recommendation |
+|:----------:|:----------------------:|:--------------:|:--------------:|
+| 8          | 1                      | ~32GB          |                |
+| 16         | 1                      | ~45GB          |                |
+| 32         | 1                      | ~74GB          | ✓              |
+
+#### Stage 2 Memory Usage
+| Batch Size | Gradient Accumulation | Memory per GPU | Recommendation |
+|:----------:|:----------------------:|:--------------:|:--------------:|
+| 1          | 8                      | ~54GB          |                |
+| 2          | 2                      | ~80GB          |                |
+| 2          | 8                      | ~85GB          | ✓              |
+
+<details close>
 ## TestCases For 1.0
 <table class="center">
   <tr style="font-weight: bolder;text-align:center;">
@@ -368,7 +513,7 @@ python -m scripts.inference --inference_config configs/inference/test.yaml --bbo
 As a complete solution to virtual human generation, you are suggested to first apply [MuseV](https://github.com/TMElyralab/MuseV) to generate a video (text-to-video, image-to-video or pose-to-video) by referring [this](https://github.com/TMElyralab/MuseV?tab=readme-ov-file#text2video). Frame interpolation is suggested to increase frame rate. Then, you can use `MuseTalk` to generate a lip-sync video by referring [this](https://github.com/TMElyralab/MuseTalk?tab=readme-ov-file#inference).
 
 # Acknowledgement
-1. We thank open-source components like [whisper](https://github.com/openai/whisper), [dwpose](https://github.com/IDEA-Research/DWPose), [face-alignment](https://github.com/1adrianb/face-alignment), [face-parsing](https://github.com/zllrunning/face-parsing.PyTorch), [S3FD](https://github.com/yxlijun/S3FD.pytorch). 
+1. We thank open-source components like [whisper](https://github.com/openai/whisper), [dwpose](https://github.com/IDEA-Research/DWPose), [face-alignment](https://github.com/1adrianb/face-alignment), [face-parsing](https://github.com/zllrunning/face-parsing.PyTorch), [S3FD](https://github.com/yxlijun/S3FD.pytorch) and [LatentSync](https://huggingface.co/ByteDance/LatentSync/tree/main). 
 1. MuseTalk has referred much to [diffusers](https://github.com/huggingface/diffusers) and [isaacOnline/whisper](https://github.com/isaacOnline/whisper/tree/extract-embeddings).
 1. MuseTalk has been built on [HDTF](https://github.com/MRzzm/HDTF) datasets.
 

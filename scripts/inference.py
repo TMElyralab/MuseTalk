@@ -8,9 +8,11 @@ import shutil
 import pickle
 import argparse
 import numpy as np
+import subprocess
 from tqdm import tqdm
 from omegaconf import OmegaConf
 from transformers import WhisperModel
+import sys
 
 from musetalk.utils.blending import get_image
 from musetalk.utils.face_parsing import FaceParsing
@@ -18,16 +20,26 @@ from musetalk.utils.audio_processor import AudioProcessor
 from musetalk.utils.utils import get_file_type, get_video_fps, datagen, load_all_model
 from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs, coord_placeholder
 
+def fast_check_ffmpeg():
+    try:
+        subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
+        return True
+    except:
+        return False
+
 @torch.no_grad()
 def main(args):
     # Configure ffmpeg path
-    if args.ffmpeg_path not in os.getenv('PATH'):
+    if not fast_check_ffmpeg():
         print("Adding ffmpeg to PATH")
-        os.environ["PATH"] = f"{args.ffmpeg_path}:{os.environ['PATH']}"
+        # Choose path separator based on operating system
+        path_separator = ';' if sys.platform == 'win32' else ':'
+        os.environ["PATH"] = f"{args.ffmpeg_path}{path_separator}{os.environ['PATH']}"
+        if not fast_check_ffmpeg():
+            print("Warning: Unable to find ffmpeg, please ensure ffmpeg is properly installed")
     
     # Set computing device
     device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
-    
     # Load model weights
     vae, unet, pe = load_all_model(
         unet_model_path=args.unet_model_path, 
