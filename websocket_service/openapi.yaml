@@ -1,0 +1,432 @@
+openapi: 3.0.3
+info:
+  title: MuseTalk WebSocket Service API
+  description: |
+    Real-time lip-sync generation service using WebSocket for video dubbing.
+    
+    This API provides WebSocket endpoints for streaming audio data and receiving
+    synchronized video frames in real-time.
+  version: 0.1.0
+  contact:
+    name: MuseTalk Development Team
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+    
+servers:
+  - url: ws://localhost:8000
+    description: Local development server
+  - url: wss://api.example.com
+    description: Production server (example)
+    
+paths:
+  /musetalk/v1/ws/{user_id}:
+    get:
+      summary: WebSocket connection endpoint
+      description: |
+        Establishes a WebSocket connection for real-time lip-sync generation.
+        All communication after connection is through WebSocket messages.
+      operationId: connectWebSocket
+      tags:
+        - WebSocket
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9_-]+$'
+            minLength: 1
+            maxLength: 64
+          description: Unique user identifier
+      responses:
+        '101':
+          description: Switching Protocols - WebSocket connection established
+        '400':
+          description: Bad Request - Invalid user_id format
+        '404':
+          description: Not Found - User avatar not found
+        '503':
+          description: Service Unavailable - Server at capacity
+          
+components:
+  schemas:
+    # Base Message Structure
+    BaseMessage:
+      type: object
+      required: [type, session_id]
+      properties:
+        type:
+          type: string
+          description: Message type identifier
+        session_id:
+          type: string
+          format: uuid
+          description: Unique session identifier (UUID v4)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          
+    # INIT Message - Client to Server
+    InitMessage:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          required: [data]
+          properties:
+            type:
+              type: string
+              enum: [INIT]
+              example: "INIT"
+            data:
+              $ref: '#/components/schemas/InitData'
+              
+    InitData:
+      type: object
+      required: [user_id, video_config]
+      properties:
+        user_id:
+          type: string
+          description: User identifier matching the connection path parameter
+          example: "user123"
+        auth_token:
+          type: string
+          description: JWT authentication token (reserved for future use)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        video_config:
+          $ref: '#/components/schemas/VideoConfig'
+          
+    VideoConfig:
+      type: object
+      required: [resolution, fps]
+      properties:
+        resolution:
+          type: string
+          enum: ["512x512"]
+          description: Output video resolution (fixed for this version)
+          example: "512x512"
+        fps:
+          type: integer
+          enum: [25]
+          description: Output frame rate (fixed at 25fps)
+          example: 25
+          
+    # INIT_SUCCESS Response - Server to Client
+    InitSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [INIT_SUCCESS]
+              example: "INIT_SUCCESS"
+            data:
+              type: object
+              required: [model_loaded, available_videos]
+              properties:
+                model_loaded:
+                  type: boolean
+                  description: Indicates if the user's model loaded successfully
+                  example: true
+                available_videos:
+                  type: array
+                  items:
+                    type: string
+                  description: List of available base videos for this user
+                  example: ["idle_0", "idle_1", "idle_2", "speaking_0", "speaking_1", "action_1"]
+                  
+    # GENERATE Message - Client to Server
+    GenerateMessage:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          required: [data]
+          properties:
+            type:
+              type: string
+              enum: [GENERATE]
+              example: "GENERATE"
+            data:
+              $ref: '#/components/schemas/GenerateData'
+              
+    GenerateData:
+      type: object
+      required: [audio_chunk, video_state]
+      properties:
+        audio_chunk:
+          $ref: '#/components/schemas/AudioChunk'
+        video_state:
+          $ref: '#/components/schemas/VideoState'
+          
+    AudioChunk:
+      type: object
+      required: [format, sample_rate, channels, duration_ms, data]
+      properties:
+        format:
+          type: string
+          enum: [pcm_s16le]
+          description: Audio format (16-bit PCM, little-endian)
+          example: "pcm_s16le"
+        sample_rate:
+          type: integer
+          enum: [16000]
+          description: Sample rate in Hz
+          example: 16000
+        channels:
+          type: integer
+          enum: [1]
+          description: Number of audio channels (mono)
+          example: 1
+        duration_ms:
+          type: integer
+          enum: [40]
+          description: Duration of audio chunk in milliseconds
+          example: 40
+        data:
+          type: string
+          format: base64
+          description: Base64 encoded PCM audio data (640 bytes for 40ms @ 16kHz mono)
+          example: "SGVsbG8gV29ybGQh..."
+          
+    VideoState:
+      type: object
+      required: [type, base_video]
+      properties:
+        type:
+          type: string
+          enum: [idle, speaking, action]
+          description: Current video state type
+          example: "speaking"
+        base_video:
+          type: string
+          description: Specific base video to use (must be in available_videos)
+          example: "speaking_0"
+          
+    # VIDEO_FRAME Response - Server to Client
+    VideoFrameResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [VIDEO_FRAME]
+              example: "VIDEO_FRAME"
+            data:
+              type: object
+              required: [frame_data, frame_timestamp]
+              properties:
+                frame_data:
+                  type: string
+                  format: base64
+                  description: Base64 encoded H.264 video frame
+                  example: "AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAA..."
+                frame_timestamp:
+                  type: integer
+                  description: Frame timestamp in milliseconds (matches audio timing)
+                  example: 40
+                  
+    # STATE_CHANGE Message - Client to Server
+    StateChangeMessage:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [STATE_CHANGE]
+              example: "STATE_CHANGE"
+            data:
+              type: object
+              required: [target_state, base_video]
+              properties:
+                target_state:
+                  type: string
+                  enum: [idle, speaking, action]
+                  description: Target state to transition to
+                  example: "speaking"
+                base_video:
+                  type: string
+                  description: Base video for the target state
+                  example: "speaking_1"
+                  
+    # STATE_CHANGED Response - Server to Client
+    StateChangedResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [STATE_CHANGED]
+              example: "STATE_CHANGED"
+            data:
+              type: object
+              required: [current_state, current_video]
+              properties:
+                current_state:
+                  type: string
+                  enum: [idle, speaking, action]
+                  description: Current state after transition
+                  example: "speaking"
+                current_video:
+                  type: string
+                  description: Current base video in use
+                  example: "speaking_1"
+                  
+    # ACTION Message - Client to Server
+    ActionMessage:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [ACTION]
+              example: "ACTION"
+            data:
+              type: object
+              required: [action_type, audio_chunk]
+              properties:
+                action_type:
+                  type: string
+                  enum: [action_1, action_2]
+                  description: Predefined action to trigger
+                  example: "action_1"
+                audio_chunk:
+                  $ref: '#/components/schemas/AudioChunk'
+                  
+    # ACTION_FRAME Response - Server to Client
+    ActionFrameResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [ACTION_FRAME]
+              example: "ACTION_FRAME"
+            data:
+              type: object
+              required: [frame_data, frame_timestamp, action_progress]
+              properties:
+                frame_data:
+                  type: string
+                  format: base64
+                  description: Base64 encoded H.264 video frame
+                frame_timestamp:
+                  type: integer
+                  description: Frame timestamp in milliseconds
+                  example: 40
+                action_progress:
+                  type: number
+                  format: float
+                  minimum: 0.0
+                  maximum: 1.0
+                  description: Action completion progress (0.0 to 1.0)
+                  example: 0.1
+                  
+    # CLOSE Message - Client to Server
+    CloseMessage:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [CLOSE]
+              example: "CLOSE"
+            data:
+              type: object
+              description: Empty object for close message
+              
+    # CLOSE_ACK Response - Server to Client
+    CloseAckResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [CLOSE_ACK]
+              example: "CLOSE_ACK"
+            data:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  enum: [client_request, server_shutdown, timeout, error]
+                  description: Reason for connection closure
+                  example: "client_request"
+                  
+    # ERROR Response - Server to Client
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseMessage'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [ERROR]
+              example: "ERROR"
+            data:
+              type: object
+              required: [code, message]
+              properties:
+                code:
+                  type: string
+                  enum: [
+                    INVALID_MESSAGE,
+                    INVALID_SESSION,
+                    MODEL_NOT_FOUND,
+                    PROCESSING_ERROR,
+                    RATE_LIMIT_EXCEEDED,
+                    INTERNAL_ERROR
+                  ]
+                  description: Error code
+                  example: "INVALID_MESSAGE"
+                message:
+                  type: string
+                  description: Human-readable error message
+                  example: "Invalid message format: missing required field 'session_id'"
+                details:
+                  type: object
+                  description: Additional error details (optional)
+                  additionalProperties: true
+                  
+  examples:
+    InitMessageExample:
+      summary: Initialize session
+      value:
+        type: "INIT"
+        session_id: "550e8400-e29b-41d4-a716-446655440000"
+        data:
+          user_id: "user123"
+          video_config:
+            resolution: "512x512"
+            fps: 25
+            
+    GenerateMessageExample:
+      summary: Generate video frame from audio
+      value:
+        type: "GENERATE"
+        session_id: "550e8400-e29b-41d4-a716-446655440000"
+        data:
+          audio_chunk:
+            format: "pcm_s16le"
+            sample_rate: 16000
+            channels: 1
+            duration_ms: 40
+            data: "base64-encoded-640-bytes"
+          video_state:
+            type: "speaking"
+            base_video: "speaking_0"
+            
+    VideoFrameResponseExample:
+      summary: Video frame response
+      value:
+        type: "VIDEO_FRAME"
+        session_id: "550e8400-e29b-41d4-a716-446655440000"
+        data:
+          frame_data: "base64-encoded-h264-frame"
+          frame_timestamp: 40
