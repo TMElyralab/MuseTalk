@@ -13,7 +13,6 @@ aiofiles==24.1.0
 
 # Utilities
 python-dotenv==1.0.1
-numpy==1.26.4
 
 # Testing
 pytest==8.3.4

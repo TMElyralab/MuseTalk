@@ -129,20 +129,39 @@ async def root():
             
             <h2>Endpoints</h2>
             <div class="endpoint">
-                <strong>WebSocket:</strong> <code>ws://localhost:8000/musetalk/v1/ws/{user_id}</code>
+                <strong>🔌 WebSocket (Main Service):</strong> <code>ws://localhost:8000/musetalk/v1/ws/{user_id}</code><br>
+                <small>Real-time lip-sync generation via WebSocket. Supports INIT, GENERATE, STATE_CHANGE, ACTION, and CLOSE messages.</small>
             </div>
             <div class="endpoint">
-                <strong>Health Check:</strong> <code>GET /health</code>
+                <strong>🏥 Health Check:</strong> <code>GET /health</code><br>
+                <small>Check service status and model loading state.</small>
             </div>
             <div class="endpoint">
-                <strong>Sessions Info:</strong> <code>GET /sessions</code>
+                <strong>📊 Sessions Info:</strong> <code>GET /sessions</code><br>
+                <small>Get active WebSocket sessions and service statistics.</small>
             </div>
             <div class="endpoint">
-                <strong>API Documentation:</strong> <code>GET /docs</code>
+                <strong>👤 Prepare Avatar:</strong> <code>POST /prepare_avatar/{user_id}?video_path=...</code><br>
+                <small>Pre-process avatar video for a user (testing endpoint).</small>
+            </div>
+            <div class="endpoint">
+                <strong>📚 API Documentation:</strong> <code>GET /docs</code><br>
+                <small>Swagger UI for REST endpoints (WebSocket not included - see below).</small>
+            </div>
+            
+            <h2>WebSocket Message Types</h2>
+            <div class="endpoint">
+                <strong>INIT:</strong> Initialize session with user_id and video config<br>
+                <strong>GENERATE:</strong> Send audio chunk for lip-sync generation<br>
+                <strong>STATE_CHANGE:</strong> Change video state (speaking/idle)<br>
+                <strong>ACTION:</strong> Trigger action video playback<br>
+                <strong>CLOSE:</strong> Close session gracefully
             </div>
             
             <h2>Quick Test</h2>
-            <p>Use the test client: <code>python test/test_client.py</code></p>
+            <p><strong>Test Client:</strong> <code>python test/test_client.py --help</code></p>
+            <p><strong>Health Check:</strong> <code>curl http://localhost:8000/health</code></p>
+            <p><strong>OpenAPI Spec:</strong> <a href="/openapi.yaml">openapi.yaml</a> | <a href="/openapi.json">openapi.json</a></p>
         </body>
     </html>
     """
@@ -159,6 +178,17 @@ async def health_check():
             "video": video_service is not None
         }
     }
+
+
+@app.get("/openapi.yaml")
+async def get_openapi_yaml():
+    """Get the complete OpenAPI specification including WebSocket documentation."""
+    from pathlib import Path
+    openapi_path = Path(__file__).parent.parent / "openapi.yaml"
+    if openapi_path.exists():
+        return open(openapi_path).read()
+    else:
+        return {"error": "OpenAPI YAML file not found"}
 
 
 @app.get("/sessions")

@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 import uuid
 
 from fastapi import WebSocket, WebSocketDisconnect
-from ..models.session import Session, SessionStatus
-from ..models.messages import ErrorCode, CloseReason
-from .message_handler import MessageHandler
+from models.session import Session, SessionStatus
+from models.messages import ErrorCode, CloseReason
+from handlers.message_handler import MessageHandler
 
 
 class ConnectionHandler:

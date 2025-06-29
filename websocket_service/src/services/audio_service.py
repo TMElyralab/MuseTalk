@@ -15,8 +15,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../../'))
 from musetalk.utils.audio_processor import AudioProcessor
 from transformers import WhisperModel
 
-from ..utils.encoding import decode_audio_chunk
-from ..models.messages import AudioChunk
+from utils.encoding import decode_audio_chunk
+from models.messages import AudioChunk
 
 
 class AudioService:

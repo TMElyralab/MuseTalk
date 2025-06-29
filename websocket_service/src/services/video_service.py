@@ -17,9 +17,9 @@ from musetalk.utils.utils import load_all_model
 from musetalk.utils.blending import get_image
 from musetalk.utils.face_parsing import FaceParsing
 
-from ..utils.video_codec import SimpleH264Encoder
-from ..models.messages import VideoStateType
-from ..models.session import Session
+from utils.video_codec import SimpleH264Encoder
+from models.messages import VideoStateType
+from models.session import Session
 
 
 class VideoService:
@@ -49,8 +49,18 @@ class VideoService:
         # H.264 encoders per session
         self.encoders = {}  # session_id -> encoder
         
-        # Face parsing
-        self.face_parser = FaceParsing()
+        # Face parsing with correct model paths
+        # Change working directory temporarily to fix relative paths
+        import os
+        current_dir = os.getcwd()
+        try:
+            # Find MuseTalk root directory (where models/ folder exists)
+            musetalk_root = self.model_path.parent
+            os.chdir(str(musetalk_root))
+            self.face_parser = FaceParsing()
+        finally:
+            # Restore original working directory
+            os.chdir(current_dir)
     
     def _init_models(self):
         """Initialize VAE, UNet, and PE models."""
@@ -59,9 +69,12 @@ class VideoService:
             unet_path = self.model_path / "musetalkV15" / "unet.pth"
             unet_config = self.model_path / "musetalkV15" / "musetalk.json"
             
+            # Use absolute path for VAE model
+            vae_path = self.model_path / "sd-vae"
+            
             self.vae, self.unet, self.pe = load_all_model(
                 unet_model_path=str(unet_path),
-                vae_type="sd-vae",
+                vae_type=str(vae_path.resolve()),
                 unet_config=str(unet_config),
                 device=self.device
             )

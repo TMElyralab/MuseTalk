@@ -5,7 +5,7 @@ import json
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from ..models.messages import (
+from models.messages import (
     MessageType, parse_message, ErrorCode,
     InitMessage, GenerateMessage, StateChangeMessage, 
     ActionMessage, CloseMessage,
@@ -14,10 +14,10 @@ from ..models.messages import (
     InitSuccessData, VideoFrameData, StateChangedData,
     ActionFrameData, CloseAckData, ErrorData, CloseReason
 )
-from ..models.session import Session, SessionStatus, AvatarInfo
-from ..services.avatar_service import AvatarService
-from ..services.audio_service import AudioService
-from ..services.video_service import VideoService
+from models.session import Session, SessionStatus, AvatarInfo
+from services.avatar_service import AvatarService
+from services.audio_service import AudioService
+from services.video_service import VideoService
 
 
 class MessageHandler:

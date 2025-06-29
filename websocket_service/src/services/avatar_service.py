@@ -10,7 +10,7 @@ import torch
 import asyncio
 from pathlib import Path
 
-from ..models.session import AvatarInfo
+from models.session import AvatarInfo
 
 
 class AvatarService:

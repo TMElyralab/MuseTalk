@@ -17,3 +17,4 @@ debug
 exp_out
 .gradio
 CLAUDE.md
+*.pcm
