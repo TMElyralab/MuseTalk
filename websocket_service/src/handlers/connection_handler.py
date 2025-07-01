@@ -55,8 +55,16 @@ class ConnectionHandler:
                 self._heartbeat_loop(session.session_id)
             )
             
+            # Start video streaming task
+            streaming_task = asyncio.create_task(
+                self._video_streaming_loop(session, websocket)
+            )
+            
             # Handle messages
             await self._message_loop(session, websocket)
+            
+            # Cancel streaming task when message loop ends
+            streaming_task.cancel()
             
         except WebSocketDisconnect:
             print(f"Client disconnected: session={session.session_id if session else 'unknown'}")
@@ -151,6 +159,129 @@ class ConnectionHandler:
                     
         except Exception as e:
             print(f"Heartbeat error: {e}")
+    
+    async def _video_streaming_loop(self, session: Session, websocket: WebSocket):
+        """Continuously stream video frames based on current state."""
+        try:
+            frame_interval = 1.0 / 25  # 25 FPS
+            frame_count = 0
+            
+            while session.status in [SessionStatus.READY, SessionStatus.PROCESSING]:
+                start_time = asyncio.get_event_loop().time()
+                
+                # Wait until session is initialized
+                if session.status != SessionStatus.READY:
+                    await asyncio.sleep(0.1)
+                    continue
+                
+                # Generate frame based on current state
+                frame_data = None
+                
+                if session.state.action_in_progress:
+                    # Generate action frame
+                    frame_data = await self._generate_action_frame(session, frame_count)
+                elif session.state.is_processing and hasattr(session, '_pending_audio_features'):
+                    # Generate lip-sync frame with audio
+                    frame_data = await self._generate_lipsync_frame(session, frame_count)
+                else:
+                    # Generate base video frame (idle/speaking without audio)
+                    frame_data = await self._generate_base_frame(session, frame_count)
+                
+                # Send frame if generated
+                if frame_data:
+                    frame_message = {
+                        "type": "VIDEO_FRAME",
+                        "session_id": session.session_id,
+                        "data": {
+                            "frame_data": frame_data,
+                            "frame_timestamp": int(frame_count * 40)  # Convert to ms
+                        }
+                    }
+                    
+                    try:
+                        await websocket.send_text(json.dumps(frame_message))
+                        frame_count += 1
+                    except Exception as e:
+                        print(f"Error sending frame: {e}")
+                        break
+                
+                # Maintain frame rate
+                elapsed = asyncio.get_event_loop().time() - start_time
+                sleep_time = max(0, frame_interval - elapsed)
+                await asyncio.sleep(sleep_time)
+                
+        except asyncio.CancelledError:
+            print(f"Video streaming cancelled for session {session.session_id}")
+        except Exception as e:
+            print(f"Video streaming error: {e}")
+    
+    async def _generate_base_frame(self, session: Session, frame_index: int) -> Optional[str]:
+        """Generate frame from base video."""
+        try:
+            # Get current base video
+            current_video = session.state.current_video
+            if not current_video:
+                return None
+            
+            # For POC, generate mock frame data
+            # In production, this would fetch actual video frame
+            frame_data = await self.message_handler.video_service.generate_base_frame(
+                session, current_video, frame_index
+            )
+            
+            return frame_data
+            
+        except Exception as e:
+            print(f"Error generating base frame: {e}")
+            return None
+    
+    async def _generate_lipsync_frame(self, session: Session, frame_index: int) -> Optional[str]:
+        """Generate lip-sync frame with audio features."""
+        try:
+            # Get pending audio features
+            audio_features = getattr(session, '_pending_audio_features', None)
+            if not audio_features:
+                return await self._generate_base_frame(session, frame_index)
+            
+            # Generate lip-sync frame
+            frame_data = await self.message_handler.video_service.generate_frame(
+                session, audio_features, frame_index
+            )
+            
+            # Clear pending features after use
+            session._pending_audio_features = None
+            
+            return frame_data
+            
+        except Exception as e:
+            print(f"Error generating lip-sync frame: {e}")
+            return None
+    
+    async def _generate_action_frame(self, session: Session, frame_index: int) -> Optional[str]:
+        """Generate action frame."""
+        try:
+            action_name = session.state.action_in_progress
+            if not action_name:
+                return None
+            
+            # Generate action frame
+            frame_data, progress = await self.message_handler.video_service.generate_action_frame(
+                session, action_name, None, session.state.action_progress
+            )
+            
+            # Update progress
+            session.update_action_progress(progress)
+            
+            # Check if action completed
+            if progress >= 1.0:
+                session.state.action_in_progress = None
+                session.state.action_progress = 0.0
+            
+            return frame_data
+            
+        except Exception as e:
+            print(f"Error generating action frame: {e}")
+            return None
     
     async def _send_error(self, 
                         websocket: WebSocket,

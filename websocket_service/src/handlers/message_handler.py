@@ -10,9 +10,9 @@ from models.messages import (
     InitMessage, GenerateMessage, StateChangeMessage, 
     ActionMessage, CloseMessage,
     InitSuccessResponse, VideoFrameResponse, StateChangedResponse,
-    ActionFrameResponse, CloseAckResponse, ErrorResponse,
+    ActionFrameResponse, ActionTriggeredResponse, CloseAckResponse, ErrorResponse,
     InitSuccessData, VideoFrameData, StateChangedData,
-    ActionFrameData, CloseAckData, ErrorData, CloseReason
+    ActionFrameData, ActionTriggeredData, CloseAckData, ErrorData, CloseReason
 )
 from models.session import Session, SessionStatus, AvatarInfo
 from services.avatar_service import AvatarService
@@ -65,8 +65,8 @@ class MessageHandler:
             # Parse message
             message = parse_message(message_data)
             
-            # Validate session ID
-            if message.session_id != session.session_id:
+            # Validate session ID (except for INIT message)
+            if message.type != MessageType.INIT and message.session_id != session.session_id:
                 return self._create_error_response(
                     session.session_id,
                     ErrorCode.INVALID_SESSION,
@@ -114,12 +114,24 @@ class MessageHandler:
             session.avatar_info = avatar_info
             session.set_status(SessionStatus.READY)
             
+            # Select default video (first idle video)
+            default_video = "idle_0"
+            if avatar_info.available_videos:
+                idle_videos = [v for v in avatar_info.available_videos if v.startswith("idle_")]
+                if idle_videos:
+                    default_video = idle_videos[0]
+            
+            # Set initial video state
+            session.set_video_state("idle", default_video)
+            
             # Create success response
             response = InitSuccessResponse(
                 session_id=session.session_id,
                 data=InitSuccessData(
                     model_loaded=avatar_info.model_loaded,
-                    available_videos=avatar_info.available_videos
+                    available_videos=avatar_info.available_videos,
+                    default_video=default_video,
+                    streaming_started=True
                 )
             )
             
@@ -138,14 +150,18 @@ class MessageHandler:
         try:
             # Check session is ready
             if not session.can_process():
+                debug_info = {
+                    "status": session.status.value,
+                    "avatar_info_exists": session.avatar_info is not None,
+                    "model_loaded": session.avatar_info.model_loaded if session.avatar_info else None,
+                    "is_processing": session.state.is_processing
+                }
                 return self._create_error_response(
                     session.session_id,
                     ErrorCode.INVALID_SESSION,
-                    "Session not ready for processing"
+                    "Session not ready for processing",
+                    debug_info
                 )
-            
-            # Mark as processing
-            session.state.is_processing = True
             
             # Process audio
             audio_features = await self.audio_service.process_audio_chunk(
@@ -154,7 +170,6 @@ class MessageHandler:
             )
             
             if audio_features is None:
-                session.state.is_processing = False
                 return self._create_error_response(
                     session.session_id,
                     ErrorCode.PROCESSING_ERROR,
@@ -168,37 +183,19 @@ class MessageHandler:
                     message.data.video_state.base_video
                 )
             
-            # Generate video frame
-            frame_data = await self.video_service.generate_frame(
-                session,
-                audio_features,
-                session.frames_generated
-            )
-            
-            if frame_data is None:
-                session.state.is_processing = False
-                return self._create_error_response(
-                    session.session_id,
-                    ErrorCode.PROCESSING_ERROR,
-                    "Video generation failed"
-                )
+            # Store audio features for the streaming loop
+            session._pending_audio_features = audio_features
+            session.state.is_processing = True
             
             # Update session stats
-            session.increment_frames()
             session.add_audio_duration(message.data.audio_chunk.duration_ms)
-            session.state.last_frame_timestamp += message.data.audio_chunk.duration_ms
+            
+            # Reset processing state immediately - the streaming loop will handle the audio
             session.state.is_processing = False
             
-            # Create response
-            response = VideoFrameResponse(
-                session_id=session.session_id,
-                data=VideoFrameData(
-                    frame_data=frame_data,
-                    frame_timestamp=session.state.last_frame_timestamp
-                )
-            )
-            
-            return response.model_dump()
+            # In v1.1, we don't return frames here - the streaming loop handles it
+            # Just acknowledge that we received the audio
+            return None
             
         except Exception as e:
             session.state.is_processing = False
@@ -258,50 +255,19 @@ class MessageHandler:
                     "Action already in progress"
                 )
             
-            # Start action
-            session.start_action(message.data.action_type.value)
+            # Start action based on action_index
+            action_name = f"action_{message.data.action_index}"
+            session.start_action(action_name)
             
-            # Process audio
-            audio_features = await self.audio_service.process_audio_chunk(
-                session.session_id,
-                message.data.audio_chunk
-            )
-            
-            if audio_features is None:
-                session.state.action_in_progress = None
-                return self._create_error_response(
-                    session.session_id,
-                    ErrorCode.PROCESSING_ERROR,
-                    "Audio processing failed"
-                )
-            
-            # Generate action frame
-            frame_data, new_progress = await self.video_service.generate_action_frame(
-                session,
-                message.data.action_type.value,
-                audio_features,
-                session.state.action_progress
-            )
-            
-            if frame_data is None:
-                session.state.action_in_progress = None
-                return self._create_error_response(
-                    session.session_id,
-                    ErrorCode.PROCESSING_ERROR,
-                    "Action frame generation failed"
-                )
-            
-            # Update progress
-            session.update_action_progress(new_progress)
-            session.state.last_frame_timestamp += message.data.audio_chunk.duration_ms
+            # Mark action as inserted into stream
+            # The actual action video will be handled by the continuous streaming logic
             
             # Create response
-            response = ActionFrameResponse(
+            response = ActionTriggeredResponse(
                 session_id=session.session_id,
-                data=ActionFrameData(
-                    frame_data=frame_data,
-                    frame_timestamp=session.state.last_frame_timestamp,
-                    action_progress=session.state.action_progress
+                data=ActionTriggeredData(
+                    action_index=message.data.action_index,
+                    inserted=True
                 )
             )
             

@@ -2,7 +2,15 @@
 
 ## Overview
 
-I have successfully implemented a complete WebSocket service for MuseTalk that provides real-time lip-sync generation according to the specification in `musetalk_websocket_spec.md`. This is a proof-of-concept (POC) implementation that includes all core functionality while maintaining a scalable architecture for future enhancements.
+I have successfully implemented a complete WebSocket service for MuseTalk that provides real-time lip-sync generation according to the specification in `musetalk_websocket_spec_v1.1.md`. This implementation supports continuous video streaming mode where video output begins immediately upon connection. This is a proof-of-concept (POC) implementation that includes all core functionality while maintaining a scalable architecture for future enhancements.
+
+## Version 1.1 Changes
+
+### Core Architecture Changes
+- **Continuous Streaming**: Video frames are generated and sent continuously at 25 FPS
+- **Automatic Start**: Default video streaming begins immediately after INIT_SUCCESS
+- **Seamless Transitions**: Smooth switching between idle, speaking, and action states
+- **Action Insertion**: Actions are inserted into the ongoing video stream
 
 ## ✅ Completed Components
 
@@ -97,7 +105,28 @@ websocket_service/
 - Mock frame generation
 - Test frame creation
 
-### 6. Testing Infrastructure
+### 6. API Changes (v1.1)
+
+**INIT Response Updates:**
+- Added `default_video` field - specifies which video starts playing
+- Added `streaming_started` field - confirms streaming has begun
+- Video streaming starts automatically after successful initialization
+
+**ACTION Message Simplified:**
+- Changed from `action_type` + `audio_chunk` to just `action_index`
+- Actions no longer require audio data
+- Action index is 1 or 2 (for action_1 or action_2)
+
+**New Response Type:**
+- `ACTION_TRIGGERED` replaces `ACTION_FRAME` for action acknowledgment
+- Contains `action_index` and `inserted: true` to confirm insertion
+
+**Continuous Streaming Loop:**
+- Dedicated async task generates frames at 25 FPS
+- Automatically switches between base videos and lip-sync
+- Handles action insertion seamlessly
+
+### 7. Testing Infrastructure
 
 **🧪 Test Client (`test/test_client.py`)**
 - Complete WebSocket client implementation

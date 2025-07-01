@@ -278,6 +278,85 @@ class VideoService:
         
         return encoded, new_progress
     
+    async def generate_base_frame(self, 
+                                session: Session,
+                                base_video: str,
+                                frame_index: int) -> Optional[str]:
+        """
+        Generate frame from base video without audio.
+        
+        Args:
+            session: Session information
+            base_video: Base video identifier (e.g., "idle_0", "speaking_1")
+            frame_index: Frame index in the video
+            
+        Returns:
+            Base64 encoded H.264 frame or None
+        """
+        try:
+            # Get or create encoder
+            if session.session_id not in self.encoders:
+                self.encoders[session.session_id] = SimpleH264Encoder(
+                    width=512, height=512, fps=25
+                )
+            
+            encoder = self.encoders[session.session_id]
+            
+            # For POC, generate mock frame
+            # In production, this would load actual video frame
+            frame = await self._generate_base_frame_mock(session, base_video, frame_index)
+            
+            if frame is None:
+                return None
+            
+            # Encode frame
+            encoded = encoder.encode_frame(frame)
+            return encoded
+            
+        except Exception as e:
+            print(f"Base frame generation error: {e}")
+            return None
+    
+    async def _generate_base_frame_mock(self,
+                                      session: Session,
+                                      base_video: str,
+                                      frame_index: int) -> np.ndarray:
+        """Generate mock base video frame for testing."""
+        # Create a test frame with variation based on video type
+        frame = np.zeros((512, 512, 3), dtype=np.uint8)
+        
+        # Different patterns based on video type
+        if base_video.startswith("idle_"):
+            # Blue gradient for idle
+            frame[:, :, 2] = np.linspace(50, 150, 512, dtype=np.uint8)
+            # Add slow animation
+            offset = int(50 * np.sin(frame_index * 0.02))
+            cv2.rectangle(frame, (200 + offset, 200), (312 + offset, 312), (100, 150, 255), -1)
+            
+        elif base_video.startswith("speaking_"):
+            # Green gradient for speaking
+            frame[:, :, 1] = np.linspace(50, 150, 512, dtype=np.uint8).reshape(-1, 1)
+            # Add mouth movement animation
+            mouth_y = 350 + int(20 * np.sin(frame_index * 0.2))
+            cv2.ellipse(frame, (256, mouth_y), (60, 30), 0, 0, 180, (0, 255, 0), -1)
+            
+        elif base_video.startswith("action_"):
+            # Red pattern for action
+            frame[:, :, 0] = 100
+            # Animated elements
+            angle = (frame_index * 5) % 360
+            cv2.ellipse(frame, (256, 256), (100, 150), angle, 0, 360, (255, 100, 100), 3)
+        
+        # Add video name
+        cv2.putText(frame, base_video, (10, 30),
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        
+        # Add frame counter
+        cv2.putText(frame, f"Frame {frame_index % 250}", (10, 480),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 1)
+        
+        return frame
+    
     def cleanup_session(self, session_id: str):
         """Clean up resources for session."""
         if session_id in self.encoders:

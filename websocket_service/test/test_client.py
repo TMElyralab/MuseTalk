@@ -30,7 +30,7 @@ class MuseTalkWebSocketClient:
         """
         self.server_url = server_url
         self.user_id = user_id
-        self.session_id = str(uuid.uuid4())
+        self.session_id = None  # Will be set by server during INIT
         self.websocket = None
         self.available_videos = []
         self.current_state = "idle"
@@ -85,9 +85,12 @@ class MuseTalkWebSocketClient:
     
     async def send_init(self):
         """Send INIT message."""
+        # For INIT message, we need to send a temporary session_id
+        # The server will return the actual session_id we should use
+        temp_session_id = str(uuid.uuid4())
         message = {
             "type": "INIT",
-            "session_id": self.session_id,
+            "session_id": temp_session_id,
             "data": {
                 "user_id": self.user_id,
                 "video_config": {
@@ -137,20 +140,13 @@ class MuseTalkWebSocketClient:
         }
         await self.send_message(message)
     
-    async def send_action(self, action_type: str, audio_data: bytes):
-        """Send ACTION message."""
+    async def send_action(self, action_index: int):
+        """Send ACTION message (v1.1 - no audio required)."""
         message = {
             "type": "ACTION",
             "session_id": self.session_id,
             "data": {
-                "action_type": action_type,
-                "audio_chunk": {
-                    "format": "pcm_s16le",
-                    "sample_rate": 16000,
-                    "channels": 1,
-                    "duration_ms": 40,
-                    "data": base64.b64encode(audio_data).decode('utf-8')
-                }
+                "action_index": action_index
             }
         }
         await self.send_message(message)
@@ -181,8 +177,15 @@ class MuseTalkWebSocketClient:
         msg_type = response.get("type")
         
         if msg_type == "INIT_SUCCESS":
+            # Extract and store the session ID from the server response
+            self.session_id = response.get("session_id")
             self.available_videos = response["data"]["available_videos"]
+            default_video = response["data"].get("default_video", "idle_0")
+            streaming_started = response["data"].get("streaming_started", False)
             print(f"Initialization successful!")
+            print(f"Session ID: {self.session_id}")
+            print(f"Default video: {default_video}")
+            print(f"Streaming started: {streaming_started}")
             print(f"Available videos: {', '.join(self.available_videos[:5])}...")
             
         elif msg_type == "VIDEO_FRAME":
@@ -207,10 +210,19 @@ class MuseTalkWebSocketClient:
             progress = response["data"]["action_progress"]
             print(f"Action frame received, progress: {progress:.2%}")
             
+        elif msg_type == "ACTION_TRIGGERED":
+            action_index = response["data"]["action_index"]
+            inserted = response["data"]["inserted"]
+            print(f"Action {action_index} triggered, inserted: {inserted}")
+            
         elif msg_type == "ERROR":
             error_code = response["data"]["code"]
             error_msg = response["data"]["message"]
-            print(f"ERROR: {error_code} - {error_msg}")
+            error_details = response["data"].get("details")
+            if error_details:
+                print(f"ERROR: {error_code} - {error_msg} - Details: {error_details}")
+            else:
+                print(f"ERROR: {error_code} - {error_msg}")
             
         elif msg_type == "CLOSE_ACK":
             reason = response["data"]["reason"]
@@ -231,16 +243,30 @@ class MuseTalkWebSocketClient:
         if not await self.connect():
             return
         
+        # Create background task to continuously receive frames
+        receive_task = None
+        
+        async def receive_frames():
+            """Continuously receive video frames."""
+            while True:
+                try:
+                    response = await self.receive_message()
+                    if response:
+                        await self.handle_response(response)
+                except Exception as e:
+                    print(f"Receive error: {e}")
+                    break
+        
         try:
             # Initialize
             print("\n1. Initializing session...")
             await self.send_init()
-            response = await self.receive_message()
-            if response:
-                await self.handle_response(response)
             
-            # Wait a bit
-            await asyncio.sleep(1)
+            # Start receiving frames in background
+            receive_task = asyncio.create_task(receive_frames())
+            
+            # Wait for initialization and initial frames
+            await asyncio.sleep(2)
             
             # Change state to speaking
             if self.available_videos:
@@ -248,36 +274,26 @@ class MuseTalkWebSocketClient:
                 speaking_videos = [v for v in self.available_videos if v.startswith("speaking")]
                 if speaking_videos:
                     await self.send_state_change("speaking", speaking_videos[0])
-                    response = await self.receive_message()
-                    if response:
-                        await self.handle_response(response)
+                    # Don't manually receive here - let the background task handle it
+                    await asyncio.sleep(0.5)  # Wait for state change to process
             
-            # Generate some frames
-            print("\n3. Generating video frames...")
+            # Send some audio frames
+            print("\n3. Sending audio frames...")
             for i in range(10):
                 audio_data = self.create_mock_audio()
                 await self.send_generate(audio_data)
-                
-                response = await self.receive_message()
-                if response:
-                    await self.handle_response(response)
-                
                 # Small delay between frames
                 await asyncio.sleep(0.04)  # 40ms
             
+            # Wait a bit to see lip-sync frames
+            await asyncio.sleep(1)
+            
             # Try an action
             print("\n4. Triggering action...")
-            audio_data = self.create_mock_audio()
-            await self.send_action("action_1", audio_data)
+            await self.send_action(1)  # Trigger action_1
             
-            # Receive action frames
-            for i in range(5):
-                response = await self.receive_message()
-                if response:
-                    await self.handle_response(response)
-                    if response.get("type") == "ACTION_FRAME":
-                        if response["data"]["action_progress"] >= 1.0:
-                            break
+            # Wait for action to complete
+            await asyncio.sleep(2)
             
             # Stats
             if self.frames_received > 0 and self.start_time:
@@ -292,6 +308,14 @@ class MuseTalkWebSocketClient:
             print(f"Test error: {e}")
             
         finally:
+            # Cancel receive task
+            if receive_task:
+                receive_task.cancel()
+                try:
+                    await receive_task
+                except asyncio.CancelledError:
+                    pass
+            
             # Disconnect
             print("\n5. Closing connection...")
             await self.disconnect()
@@ -302,9 +326,9 @@ async def interactive_mode(client: MuseTalkWebSocketClient):
     print("\n=== Interactive Mode ===")
     print("Commands:")
     print("  init - Initialize session")
-    print("  generate [n] - Generate n frames (default 1)")
+    print("  generate [n] - Send n audio chunks (default 1)")
     print("  state <state> <video> - Change state")
-    print("  action <type> - Trigger action")
+    print("  action <index> - Trigger action (1 or 2)")
     print("  quit - Exit")
     print()
     
@@ -350,8 +374,8 @@ async def interactive_mode(client: MuseTalkWebSocketClient):
                 await client.send_state_change(parts[1], parts[2])
                 
             elif cmd == "action" and len(parts) >= 2:
-                audio_data = client.create_mock_audio()
-                await client.send_action(parts[1], audio_data)
+                action_index = int(parts[1])
+                await client.send_action(action_index)
                 
             else:
                 print("Unknown command")
