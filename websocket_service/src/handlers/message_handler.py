@@ -163,10 +163,15 @@ class MessageHandler:
                     debug_info
                 )
             
-            # Process audio
-            audio_features = await self.audio_service.process_audio_chunk(
+            # Process audio using MuseTalk pipeline
+            from utils.encoding import decode_audio_chunk
+            audio_data, _ = decode_audio_chunk(message.data.audio_chunk.data)
+            audio_bytes = audio_data.tobytes()
+            
+            audio_features = await self.audio_service.process_audio_for_inference(
                 session.session_id,
-                message.data.audio_chunk
+                audio_bytes,
+                message.data.audio_chunk.sample_rate
             )
             
             if audio_features is None:

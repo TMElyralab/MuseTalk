@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuseTalk Avatar Creator & Performance Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 90%;
+            max-width: 800px;
+            min-height: 600px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            display: block;
+        }
+
+        .upload-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #f8f9ff;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-zone.dragover {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .upload-hint {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: #764ba2;
+        }
+
+        /* Processing Section */
+        .processing-section {
+            display: none;
+        }
+
+        .processing-steps {
+            margin-bottom: 30px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: #667eea;
+            color: white;
+            transform: translateX(10px);
+        }
+
+        .step.completed {
+            background: #28a745;
+            color: white;
+        }
+
+        .step-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .processing-info {
+            text-align: center;
+            color: #666;
+        }
+
+        /* Testing Section */
+        .testing-section {
+            display: none;
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 1;
+        }
+
+        #avatar-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .connection-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .status-connected {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-disconnected {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status-connecting {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        /* Metrics Panel */
+        .metrics-panel {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .back-btn {
+            margin-top: 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .upload-zone {
+                padding: 40px 15px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .processing-section .step.active {
+            animation: pulse 2s infinite;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 MuseTalk Avatar</h1>
+            <p class="subtitle">Create your AI avatar from one video, then test real-time lip-sync performance</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section" id="upload-section">
+            <div class="upload-zone" id="upload-zone">
+                <div class="upload-icon">📹</div>
+                <div class="upload-text">Upload Your Video</div>
+                <div class="upload-hint">One video (30-60 seconds) • Speak naturally • Include some gestures</div>
+                <input type="file" id="file-input" class="file-input" accept="video/*">
+                <button class="upload-btn" onclick="document.getElementById('file-input').click()">Choose Video File</button>
+            </div>
+            
+            <div class="upload-requirements">
+                <h3 style="margin-bottom: 15px; color: #667eea;">📋 Video Requirements:</h3>
+                <ul style="color: #666; line-height: 1.6; margin-left: 20px;">
+                    <li>Duration: 30-60 seconds</li>
+                    <li>Clear face visibility throughout</li>
+                    <li>Good lighting conditions</li>
+                    <li>Speak naturally (read text, have conversation)</li>
+                    <li>Include some natural gestures (nodding, smiling)</li>
+                    <li>Minimal background noise</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Processing Section -->
+        <div class="processing-section" id="processing-section">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #667eea;">🔄 Creating Your Avatar</h2>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+
+            <div class="processing-steps" id="processing-steps">
+                <div class="step" id="step-upload">
+                    <div class="step-icon">📹</div>
+                    <div>Uploading video...</div>
+                </div>
+                <div class="step" id="step-analyze">
+                    <div class="step-icon">🎯</div>
+                    <div>Analyzing video content...</div>
+                </div>
+                <div class="step" id="step-face">
+                    <div class="step-icon">👤</div>
+                    <div>Detecting face regions...</div>
+                </div>
+                <div class="step" id="step-audio">
+                    <div class="step-icon">🗣️</div>
+                    <div>Processing speech patterns...</div>
+                </div>
+                <div class="step" id="step-segment">
+                    <div class="step-icon">✂️</div>
+                    <div>Segmenting into avatar videos...</div>
+                </div>
+                <div class="step" id="step-generate">
+                    <div class="step-icon">✨</div>
+                    <div>Generating avatar model...</div>
+                </div>
+                <div class="step" id="step-complete">
+                    <div class="step-icon">✅</div>
+                    <div>Avatar ready for testing!</div>
+                </div>
+            </div>
+
+            <div class="processing-info">
+                <p>This usually takes 2-5 minutes depending on video length and system performance.</p>
+                <p>Your User ID: <strong id="user-id-display">Generating...</strong></p>
+            </div>
+        </div>
+
+        <!-- Testing Section -->
+        <div class="testing-section" id="testing-section">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #667eea;">🎥 Avatar Performance Test</h2>
+            
+            <div class="video-container">
+                <video id="avatar-video" autoplay muted></video>
+                <div class="connection-status status-disconnected" id="connection-status">Disconnected</div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn btn-primary" id="connect-btn">Connect Avatar</button>
+                <button class="control-btn btn-success btn-disabled" id="mic-btn" disabled>🎤 Enable Microphone</button>
+                <button class="control-btn btn-warning btn-disabled" id="action1-btn" disabled>Action 1</button>
+                <button class="control-btn btn-warning btn-disabled" id="action2-btn" disabled>Action 2</button>
+                <button class="control-btn btn-secondary" id="reset-btn">Reset Metrics</button>
+            </div>
+
+            <div class="metrics-panel">
+                <h3 style="margin-bottom: 15px; color: #333;">📊 Performance Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="fps-metric">0</div>
+                        <div class="metric-label">FPS</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="latency-metric">0ms</div>
+                        <div class="metric-label">Latency</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="frames-metric">0</div>
+                        <div class="metric-label">Frames</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="drops-metric">0</div>
+                        <div class="metric-label">Drops</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="quality-metric">-</div>
+                        <div class="metric-label">Quality</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="state-metric">idle</div>
+                        <div class="metric-label">State</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="back-btn" onclick="goBackToUpload()">🔄 Create New Avatar</button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

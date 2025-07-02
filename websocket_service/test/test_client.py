@@ -43,7 +43,13 @@ class MuseTalkWebSocketClient:
         print(f"Connecting to {ws_url}...")
         
         try:
-            self.websocket = await websockets.connect(ws_url)
+            # Increase timeout for connection and ping
+            self.websocket = await websockets.connect(
+                ws_url,
+                ping_timeout=60,  # 60 second ping timeout
+                ping_interval=60,  # Ping every 60 seconds
+                close_timeout=10   # 10 second close timeout
+            )
             print("Connected successfully!")
             return True
         except Exception as e:

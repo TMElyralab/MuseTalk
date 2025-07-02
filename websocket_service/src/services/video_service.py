@@ -3,18 +3,22 @@ Video generation service for MuseTalk WebSocket.
 """
 import asyncio
 import numpy as np
-import torch
 import cv2
+import pickle
+import glob
 from typing import Optional, Tuple, Dict, Any
 import sys
 import os
 from pathlib import Path
 
+import torch
+
 # Add MuseTalk to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../../'))
 
-from musetalk.utils.utils import load_all_model
-from musetalk.utils.blending import get_image
+# Import MuseTalk utilities - fail fast if not available
+from musetalk.utils.utils import load_all_model, datagen
+from musetalk.utils.blending import get_image_blending, get_image_prepare_material  
 from musetalk.utils.face_parsing import FaceParsing
 
 from utils.video_codec import SimpleH264Encoder
@@ -28,7 +32,7 @@ class VideoService:
     def __init__(self,
                  model_path: str = "../models",
                  device: str = "cuda",
-                 dtype: torch.dtype = torch.float32,
+                 dtype = None,
                  use_float16: bool = False):
         """
         Initialize video generation service.
@@ -41,7 +45,7 @@ class VideoService:
         """
         self.model_path = Path(model_path)
         self.device = torch.device(device if torch.cuda.is_available() else "cpu")
-        self.dtype = torch.float16 if use_float16 else torch.float32
+        self.dtype = torch.float16 if use_float16 else (dtype if dtype is not None else torch.float32)
         
         # Initialize models
         self._init_models()
@@ -63,44 +67,46 @@ class VideoService:
             os.chdir(current_dir)
     
     def _init_models(self):
-        """Initialize VAE, UNet, and PE models."""
+        """Initialize VAE, UNet, and PE models using MuseTalk's load_all_model."""
         try:
-            # Load models
-            unet_path = self.model_path / "musetalkV15" / "unet.pth"
-            unet_config = self.model_path / "musetalkV15" / "musetalk.json"
+            # Change to MuseTalk root directory for proper model loading
+            current_dir = os.getcwd()
+            musetalk_root = self.model_path.parent
+            os.chdir(str(musetalk_root))
             
-            # Use absolute path for VAE model
-            vae_path = self.model_path / "sd-vae"
-            
-            self.vae, self.unet, self.pe = load_all_model(
-                unet_model_path=str(unet_path),
-                vae_type=str(vae_path.resolve()),
-                unet_config=str(unet_config),
-                device=self.device
-            )
-            
-            # Convert to appropriate dtype
-            if self.dtype == torch.float16:
-                self.pe = self.pe.half()
-                self.vae.vae = self.vae.vae.half()
-                self.unet.model = self.unet.model.half()
-            
-            # Move to device
-            self.pe = self.pe.to(self.device)
-            self.vae.vae = self.vae.vae.to(self.device)
-            self.unet.model = self.unet.model.to(self.device)
-            
-            # Fixed timestep for non-diffusion inference
-            self.timesteps = torch.tensor([0], device=self.device)
-            
-            print(f"Video models loaded successfully on {self.device}")
+            try:
+                # Use MuseTalk's load_all_model function with relative paths (like realtime_inference.py)
+                self.vae, self.unet, self.pe = load_all_model(
+                    unet_model_path="models/musetalkV15/unet.pth",
+                    vae_type="sd-vae",
+                    unet_config="models/musetalkV15/musetalk.json",
+                    device=self.device
+                )
+                
+                # Convert to appropriate dtype (like realtime_inference.py)
+                if self.dtype == torch.float16:
+                    self.pe = self.pe.half().to(self.device)
+                    self.vae.vae = self.vae.vae.half().to(self.device)
+                    self.unet.model = self.unet.model.half().to(self.device)
+                else:
+                    self.pe = self.pe.to(self.device)
+                    self.vae.vae = self.vae.vae.to(self.device)
+                    self.unet.model = self.unet.model.to(self.device)
+                
+                # Fixed timestep for non-diffusion inference (like realtime_inference.py)
+                self.timesteps = torch.tensor([0], device=self.device)
+                
+                print(f"MuseTalk models loaded successfully on {self.device}")
+                
+            finally:
+                # Restore original working directory
+                os.chdir(current_dir)
             
         except Exception as e:
-            print(f"Failed to load video models: {e}")
-            # For POC, we'll continue without real models
-            self.vae = None
-            self.unet = None
-            self.pe = None
+            print(f"FATAL: Failed to load MuseTalk models: {e}")
+            import traceback
+            traceback.print_exc()
+            raise RuntimeError(f"Cannot initialize VideoService without MuseTalk models: {e}")
     
     def get_encoder(self, session_id: str) -> SimpleH264Encoder:
         """Get or create H.264 encoder for session."""
@@ -166,52 +172,140 @@ class VideoService:
                            session: Session,
                            audio_features: torch.Tensor,
                            frame_index: int) -> Optional[np.ndarray]:
-        """Synchronous frame generation."""
+        """Synchronous frame generation using MuseTalk pipeline (like realtime_inference.py)."""
         try:
-            # This is a simplified version
-            # Real implementation would:
-            # 1. Load avatar latents for the frame
-            # 2. Get audio embedding with PE
-            # 3. Run UNet inference
-            # 4. Decode with VAE
-            # 5. Blend with original frame
+            # Load avatar data for the session
+            avatar_info = session.avatar_info
+            if not avatar_info or not avatar_info.latents_path:
+                print("No avatar data available for frame generation")
+                return None
+            
+            # Load avatar latents and coordinates
+            latents = torch.load(avatar_info.latents_path, map_location=self.device)
+            with open(avatar_info.coords_path, 'rb') as f:
+                coord_list_cycle = pickle.load(f)
+            
+            # Load mask coordinates if available
+            mask_coords_list_cycle = None
+            if avatar_info.mask_coords_path and os.path.exists(avatar_info.mask_coords_path):
+                with open(avatar_info.mask_coords_path, 'rb') as f:
+                    mask_coords_list_cycle = pickle.load(f)
+            
+            # Load original frames
+            full_imgs_path = os.path.join(os.path.dirname(avatar_info.latents_path), "full_imgs")
+            frame_list_cycle = None
+            if os.path.exists(full_imgs_path):
+                import glob
+                img_files = sorted(glob.glob(os.path.join(full_imgs_path, "*.png")))
+                if img_files and MUSETALK_IMPORTS_AVAILABLE:
+                    try:
+                        # Import read_imgs only when needed to avoid initialization issues
+                        current_dir = os.getcwd()
+                        musetalk_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+                        os.chdir(musetalk_root)
+                        try:
+                            from musetalk.utils.preprocessing import read_imgs
+                            frame_list_cycle = read_imgs(img_files)
+                        finally:
+                            os.chdir(current_dir)
+                    except Exception as e:
+                        print(f"Could not load frames with read_imgs: {e}")
+                        # Fallback: load frames manually with cv2
+                        frame_list_cycle = []
+                        for img_file in img_files:
+                            frame = cv2.imread(img_file)
+                            if frame is not None:
+                                frame_list_cycle.append(frame)
             
             with torch.no_grad():
-                # Get audio embedding
-                audio_emb = self.pe(audio_features)
+                # Get current frame index in cycle
+                cycle_idx = frame_index % len(latents)
                 
-                # Mock latent (in real version, load from avatar)
-                latent = torch.randn(1, 4, 32, 32, device=self.device, dtype=self.dtype)
+                # Get audio embedding (like realtime_inference.py)
+                audio_emb = self.pe(audio_features.to(device=self.device, dtype=self.dtype))
                 
-                # UNet inference
+                # Get latent for current frame
+                current_latent = latents[cycle_idx]
+                if not isinstance(current_latent, torch.Tensor):
+                    current_latent = torch.tensor(current_latent)
+                current_latent = current_latent.to(device=self.device, dtype=self.dtype)
+                
+                # Ensure correct batch dimension
+                if len(current_latent.shape) == 3:
+                    current_latent = current_latent.unsqueeze(0)
+                
+                # UNet inference (like realtime_inference.py)
                 pred_latents = self.unet.model(
-                    latent, 
+                    current_latent, 
                     self.timesteps, 
                     encoder_hidden_states=audio_emb
                 ).sample
                 
-                # VAE decode
-                frame = self.vae.decode_latents(pred_latents)
+                # VAE decode (like realtime_inference.py)
+                pred_latents = pred_latents.to(device=self.device, dtype=self.vae.vae.dtype)
+                recon_frame = self.vae.decode_latents(pred_latents)
                 
-                # Convert to numpy
-                if isinstance(frame, torch.Tensor):
-                    frame = frame.cpu().numpy()
+                # Get the reconstructed frame
+                if isinstance(recon_frame, list):
+                    recon_frame = recon_frame[0]
                 
-                # Ensure correct shape and type
-                if len(frame.shape) == 4:
-                    frame = frame[0]  # Remove batch dimension
+                # Convert to numpy and ensure correct format
+                if isinstance(recon_frame, torch.Tensor):
+                    recon_frame = recon_frame.cpu().numpy()
+                
+                # Ensure correct shape (H, W, C)
+                if len(recon_frame.shape) == 4:
+                    recon_frame = recon_frame[0]  # Remove batch
+                if recon_frame.shape[0] == 3:  # CHW -> HWC
+                    recon_frame = np.transpose(recon_frame, (1, 2, 0))
                 
                 # Convert to uint8 RGB
-                frame = (frame * 255).clip(0, 255).astype(np.uint8)
+                recon_frame = (recon_frame * 255).clip(0, 255).astype(np.uint8)
                 
-                # Resize to 512x512 if needed
-                if frame.shape[:2] != (512, 512):
-                    frame = cv2.resize(frame, (512, 512))
+                # Blend with original frame if available (like realtime_inference.py)
+                if frame_list_cycle and mask_coords_list_cycle:
+                    try:
+                        ori_frame = frame_list_cycle[cycle_idx].copy()
+                        bbox = coord_list_cycle[cycle_idx]
+                        x1, y1, x2, y2 = bbox
+                        
+                        # Resize generated frame to match bbox
+                        recon_resized = cv2.resize(recon_frame, (x2 - x1, y2 - y1))
+                        
+                        # Load mask for blending
+                        mask_path = os.path.join(os.path.dirname(avatar_info.latents_path), "mask")
+                        mask_file = os.path.join(mask_path, f"{str(cycle_idx).zfill(8)}.png")
+                        
+                        if os.path.exists(mask_file):
+                            mask = cv2.imread(mask_file, cv2.IMREAD_GRAYSCALE)
+                            mask_crop_box = mask_coords_list_cycle[cycle_idx]
+                            
+                            # Use MuseTalk's blending function
+                            final_frame = get_image_blending(ori_frame, recon_resized, bbox, mask, mask_crop_box)
+                        else:
+                            # Simple overlay without mask
+                            final_frame = ori_frame.copy()
+                            final_frame[y1:y2, x1:x2] = recon_resized
+                        
+                        # Resize to output resolution
+                        final_frame = cv2.resize(final_frame, (512, 512))
+                        return final_frame
+                        
+                    except Exception as e:
+                        print(f"Error in frame blending: {e}")
+                        # Fall back to just the generated frame
+                        pass
                 
-                return frame
+                # If no blending, just return the generated frame
+                if recon_frame.shape[:2] != (512, 512):
+                    recon_frame = cv2.resize(recon_frame, (512, 512))
+                
+                return recon_frame
                 
         except Exception as e:
-            print(f"Real frame generation error: {e}")
+            print(f"MuseTalk frame generation error: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     async def _generate_frame_mock(self,

@@ -1,0 +1,51 @@
+# MuseTalk WebSocket Service Configuration
+# Based on realtime_inference.py configuration structure
+
+# Model Configuration
+model:
+  version: "v15"  # v1 or v15
+  unet_model_path: "models/musetalkV15/unet.pth"
+  unet_config: "models/musetalkV15/musetalk.json"
+  vae_type: "sd-vae"
+  whisper_dir: "models/whisper"
+  device: "cuda"  # cuda or cpu
+  use_float16: true
+  
+# Avatar Processing Configuration
+avatar:
+  bbox_shift: 0  # For v15, use 0. For v1, can be adjusted
+  extra_margin: 10  # Extra margin for face cropping
+  fps: 25
+  parsing_mode: "jaw"  # Face blending parsing mode for v15
+  left_cheek_width: 90
+  right_cheek_width: 90
+
+# Audio Processing Configuration  
+audio:
+  sample_rate: 16000
+  audio_padding_length_left: 2
+  audio_padding_length_right: 2
+  batch_size: 20
+
+# WebSocket Server Configuration
+server:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins: ["*"]
+  avatars_dir: "../results/v15/avatars"
+  temp_dir: "/tmp/musetalk_processing"
+
+# Video Processing Configuration
+video:
+  target_fps: 25
+  target_resolution: [512, 512]
+  required_videos:
+    idle: 7      # idle_0 to idle_6
+    speaking: 8  # speaking_0 to speaking_7  
+    action: 2    # action_1, action_2
+    
+# Performance Configuration
+performance:
+  cache_size: 10  # Number of avatars to cache
+  buffer_size: 10  # Audio buffer size
+  max_concurrent_sessions: 50

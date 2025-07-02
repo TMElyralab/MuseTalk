@@ -6,9 +6,10 @@ import glob
 import pickle
 import json
 from typing import Optional, List, Dict, Any
-import torch
 import asyncio
 from pathlib import Path
+
+import torch
 
 from models.session import AvatarInfo
 
@@ -85,9 +86,29 @@ class AvatarService:
             if info_path.exists():
                 with open(info_path, 'r') as f:
                     info_data = json.load(f)
+                
+                # Check if this is from processed video (has avatar_videos field)
+                if "avatar_videos" in info_data:
+                    # Load from processed video results
+                    latents_path = avatar_path / "latents.pt"
+                    coords_path = avatar_path / "coords.pkl"
+                    mask_coords_path = avatar_path / "mask_coords.pkl"
+                    
+                    avatar_info = AvatarInfo(
+                        user_id=user_id,
+                        model_loaded=latents_path.exists(),
+                        available_videos=info_data.get("avatar_videos", self._get_available_videos(user_id)),
+                        avatar_path=str(avatar_path),
+                        latents_path=str(latents_path) if latents_path.exists() else None,
+                        coords_path=str(coords_path) if coords_path.exists() else None,
+                        mask_coords_path=str(mask_coords_path) if mask_coords_path.exists() else None
+                    )
+                    
+                    return avatar_info
             else:
                 info_data = {}
             
+            # Fallback to legacy loading
             # Check for required files
             latents_path = avatar_path / "latents.pt"
             coords_path = avatar_path / "coords.pkl"
@@ -138,6 +159,53 @@ class AvatarService:
             available_videos=self._get_available_videos(user_id),
             avatar_path=str(self.avatars_dir / user_id)
         )
+    
+    async def load_from_processed_video(self, user_id: str) -> Optional[AvatarInfo]:
+        """
+        Load avatar from processed video results.
+        
+        This method loads avatar information that was created by the
+        video processing service from a single uploaded video.
+        """
+        avatar_path = self.avatars_dir / user_id
+        
+        if not avatar_path.exists():
+            return None
+            
+        # Check for processed avatar info
+        info_path = avatar_path / "avatar_info.json"
+        if not info_path.exists():
+            return None
+            
+        try:
+            with open(info_path, 'r') as f:
+                processed_info = json.load(f)
+            
+            # Check for required files
+            latents_path = avatar_path / "latents.pt"
+            coords_path = avatar_path / "coords.pkl"
+            mask_coords_path = avatar_path / "mask_coords.pkl"
+            
+            # Get available videos from the processed results
+            available_videos = processed_info.get("avatar_videos", [])
+            if not available_videos:
+                available_videos = self._get_available_videos(user_id)
+            
+            avatar_info = AvatarInfo(
+                user_id=user_id,
+                model_loaded=latents_path.exists(),
+                available_videos=available_videos,
+                avatar_path=str(avatar_path),
+                latents_path=str(latents_path) if latents_path.exists() else None,
+                coords_path=str(coords_path) if coords_path.exists() else None,
+                mask_coords_path=str(mask_coords_path) if mask_coords_path.exists() else None
+            )
+            
+            return avatar_info
+            
+        except Exception as e:
+            print(f"Error loading processed avatar for {user_id}: {e}")
+            return None
     
     async def prepare_avatar(self, user_id: str, video_path: str) -> bool:
         """
@@ -206,7 +274,7 @@ class AvatarService:
         else:
             self.avatar_cache.clear()
     
-    async def load_avatar_latents(self, user_id: str) -> Optional[torch.Tensor]:
+    async def load_avatar_latents(self, user_id: str):
         """Load avatar latents for user."""
         avatar_info = await self.load_avatar(user_id)
         if not avatar_info or not avatar_info.latents_path:
