@@ -1,6 +1,9 @@
 import os
 import argparse
 import subprocess
+import torch
+import numpy as np
+from tqdm import tqdm
 from omegaconf import OmegaConf
 from typing import Tuple, List, Union
 import decord
@@ -9,9 +12,6 @@ import cv2
 from musetalk.utils.face_detection import FaceAlignment,LandmarksType
 from mmpose.apis import inference_topdown, init_model
 from mmpose.structures import merge_data_samples
-import torch
-import numpy as np
-from tqdm import tqdm
 import sys
 
 def fast_check_ffmpeg():
