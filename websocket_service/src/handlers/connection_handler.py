@@ -104,6 +104,8 @@ class ConnectionHandler:
                     continue
                 
                 # Handle message
+                print(f"Received message from session {session.session_id}: {message_data.get('type', 'UNKNOWN')}")
+                
                 response = await self.message_handler.handle_message(
                     session, 
                     message_data
@@ -111,6 +113,7 @@ class ConnectionHandler:
                 
                 # Send response if any
                 if response:
+                    print(f"Sending response to session {session.session_id}: {response.get('type', 'UNKNOWN')}")
                     await websocket.send_text(json.dumps(response))
                 
                 # Check if session is closing
@@ -166,11 +169,14 @@ class ConnectionHandler:
             frame_interval = 1.0 / 25  # 25 FPS
             frame_count = 0
             
+            print(f"Starting video streaming loop for session {session.session_id}")
+            
             while session.status in [SessionStatus.READY, SessionStatus.PROCESSING]:
                 start_time = asyncio.get_event_loop().time()
                 
                 # Wait until session is initialized
                 if session.status != SessionStatus.READY:
+                    print(f"Session {session.session_id} not ready, status: {session.status}")
                     await asyncio.sleep(0.1)
                     continue
                 
@@ -179,12 +185,15 @@ class ConnectionHandler:
                 
                 if session.state.action_in_progress:
                     # Generate action frame
+                    print(f"Generating action frame for session {session.session_id}")
                     frame_data = await self._generate_action_frame(session, frame_count)
                 elif session.state.is_processing and hasattr(session, '_pending_audio_features'):
                     # Generate lip-sync frame with audio
+                    print(f"Generating lip-sync frame for session {session.session_id}")
                     frame_data = await self._generate_lipsync_frame(session, frame_count)
                 else:
                     # Generate base video frame (idle/speaking without audio)
+                    print(f"Generating base frame for session {session.session_id}, frame {frame_count}")
                     frame_data = await self._generate_base_frame(session, frame_count)
                 
                 # Send frame if generated
@@ -200,10 +209,13 @@ class ConnectionHandler:
                     
                     try:
                         await websocket.send_text(json.dumps(frame_message))
+                        print(f"Sent VIDEO_FRAME {frame_count} to session {session.session_id}, data length: {len(frame_data) if frame_data else 0}")
                         frame_count += 1
                     except Exception as e:
                         print(f"Error sending frame: {e}")
                         break
+                else:
+                    print(f"No frame data generated for session {session.session_id}, frame {frame_count}")
                 
                 # Maintain frame rate
                 elapsed = asyncio.get_event_loop().time() - start_time

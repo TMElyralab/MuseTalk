@@ -190,6 +190,7 @@ class MuseTalkAvatarApp {
             }
         };
 
+        console.log('Sending INIT message:', initMessage);
         this.websocket.send(JSON.stringify(initMessage));
     }
 
@@ -224,6 +225,10 @@ class MuseTalkAvatarApp {
                     break;
                 case 'CLOSE_ACK':
                     this.handleCloseAck(message);
+                    break;
+                case 'PING':
+                    // Handle server heartbeat - no action needed
+                    console.log('Received heartbeat from server');
                     break;
                 default:
                     console.log('Unknown message type:', messageType);
@@ -260,6 +265,12 @@ class MuseTalkAvatarApp {
         const frameData = message.data.frame_data;
         const timestamp = message.data.frame_timestamp;
         
+        console.log('Received VIDEO_FRAME:', {
+            frameDataLength: frameData ? frameData.length : 'null',
+            timestamp: timestamp,
+            frameType: typeof frameData
+        });
+        
         // Update metrics
         this.metrics.frameCount++;
         const now = Date.now();
@@ -272,37 +283,74 @@ class MuseTalkAvatarApp {
         this.metrics.lastFrameTime = now;
         this.metrics.latency = now - (this.metrics.startTime + timestamp);
 
-        // Display frame (for demo, we'll create a colored rectangle)
-        this.displayMockFrame(frameData);
+        // Display frame
+        if (frameData) {
+            this.displayMockFrame(frameData);
+        } else {
+            console.warn('Received VIDEO_FRAME with no frame_data');
+        }
     }
 
     displayMockFrame(frameData) {
+        console.log('Received video frame data length:', frameData.length);
+        
         const video = document.getElementById('avatar-video');
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
         
-        canvas.width = 512;
-        canvas.height = 512;
-        
-        // Create a mock frame with changing colors based on frame data
-        const frameSize = frameData.length;
-        const hue = (frameSize % 360);
-        
-        ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
-        ctx.fillRect(0, 0, 512, 512);
-        
-        // Add some text overlay
-        ctx.fillStyle = 'white';
-        ctx.font = '24px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Avatar Frame ${this.metrics.frameCount}`, 256, 256);
-        ctx.fillText(`${this.metrics.fps} FPS`, 256, 300);
-        
-        // Convert canvas to video source
-        canvas.toBlob((blob) => {
+        try {
+            // Decode base64 H.264 frame data
+            const binaryString = atob(frameData);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            // Create blob with H.264 data
+            const blob = new Blob([bytes], { type: 'video/mp4' });
             const url = URL.createObjectURL(blob);
+            
+            // Set video source
+            if (video.src) {
+                URL.revokeObjectURL(video.src);
+            }
             video.src = url;
-        });
+            
+            // Ensure video plays
+            video.play().catch(e => console.log('Video play error:', e));
+            
+        } catch (error) {
+            console.error('Error decoding video frame:', error);
+            
+            // Fallback to mock frame
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 512;
+            canvas.height = 512;
+            
+            // Create a mock frame with changing colors
+            const frameSize = frameData.length;
+            const hue = (frameSize % 360);
+            
+            ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Add some text overlay
+            ctx.fillStyle = 'white';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Avatar Frame ${this.metrics.frameCount}`, 256, 256);
+            ctx.fillText(`${this.metrics.fps} FPS`, 256, 300);
+            ctx.fillText(`Mock Mode`, 256, 350);
+            
+            // Convert canvas to video source
+            canvas.toBlob((blob) => {
+                if (video.src) {
+                    URL.revokeObjectURL(video.src);
+                }
+                const url = URL.createObjectURL(blob);
+                video.src = url;
+            });
+        }
     }
 
     handleStateChanged(message) {
@@ -471,6 +519,10 @@ class MuseTalkAvatarApp {
                     duration_ms: 40,
                     data: audioBase64
                 },
+                video_state: {
+                    type: 'speaking',
+                    base_video: 'speaking_0'
+                }
             }
         };
 

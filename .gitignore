@@ -18,3 +18,4 @@ exp_out
 .gradio
 CLAUDE.md
 *.pcm
+websocket_service/avatars/*

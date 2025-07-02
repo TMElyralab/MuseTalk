@@ -388,27 +388,35 @@ class VideoService:
             Base64 encoded H.264 frame or None
         """
         try:
+            print(f"VideoService: generate_base_frame called for session {session.session_id}, video {base_video}, frame {frame_index}")
+            
             # Get or create encoder
             if session.session_id not in self.encoders:
                 self.encoders[session.session_id] = SimpleH264Encoder(
                     width=512, height=512, fps=25
                 )
+                print(f"VideoService: Created new encoder for session {session.session_id}")
             
             encoder = self.encoders[session.session_id]
             
             # For POC, generate mock frame
             # In production, this would load actual video frame
             frame = await self._generate_base_frame_mock(session, base_video, frame_index)
+            print(f"VideoService: Mock frame generated, shape: {frame.shape if frame is not None else 'None'}")
             
             if frame is None:
+                print(f"VideoService: No frame data generated")
                 return None
             
             # Encode frame
             encoded = encoder.encode_frame(frame)
+            print(f"VideoService: Frame encoded, length: {len(encoded) if encoded else 'None'}")
             return encoded
             
         except Exception as e:
-            print(f"Base frame generation error: {e}")
+            print(f"VideoService: Base frame generation error: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     async def _generate_base_frame_mock(self,
