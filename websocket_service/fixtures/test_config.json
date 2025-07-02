@@ -1,0 +1,17 @@
+{
+  "test_user_id": "test_user",
+  "sample_rate": 16000,
+  "chunk_duration_ms": 40,
+  "chunks_per_second": 25,
+  "audio_files": {
+    "sine": "sine_440hz_1s.wav",
+    "speech": "speech_like_2s.wav",
+    "chunks": [
+      "chunk_000_40ms.pcm",
+      "chunk_001_40ms.pcm",
+      "chunk_002_40ms.pcm",
+      "chunk_003_40ms.pcm",
+      "chunk_004_40ms.pcm"
+    ]
+  }
+}

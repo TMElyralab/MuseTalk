@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuseTalk Real-time Lip Sync Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 90%;
+            max-width: 800px;
+            min-height: 600px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        /* Main Section */
+        .main-section {
+            display: block;
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 1;
+        }
+
+        #avatar-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .connection-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .status-connected {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-disconnected {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status-connecting {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        /* Metrics Panel */
+        .metrics-panel {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 MuseTalk Real-time Lip Sync</h1>
+            <p class="subtitle">Stream audio and watch real-time lip synchronization</p>
+        </div>
+
+        <!-- Main Section -->
+        <div class="main-section" id="main-section">
+
+            <h2 style="text-align: center; margin-bottom: 20px; color: #667eea;">🎥 Real-time Lip Sync Demo</h2>
+            
+            <!-- User Selection -->
+            <div class="user-selection" style="text-align: center; margin-bottom: 30px;">
+                <label for="user-select" style="font-size: 1.1em; margin-right: 10px;">Select Avatar:</label>
+                <select id="user-select" style="padding: 8px 15px; font-size: 1em; border-radius: 20px; border: 2px solid #667eea; background: white;">
+                    <option value="demo_user">Demo User</option>
+                    <option value="user_1">Avatar 1</option>
+                    <option value="user_2">Avatar 2</option>
+                </select>
+            </div>
+            
+            <div class="video-container">
+                <video id="avatar-video" autoplay muted></video>
+                <div class="connection-status status-disconnected" id="connection-status">Disconnected</div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn btn-primary" id="connect-btn">Connect Avatar</button>
+                <button class="control-btn btn-success btn-disabled" id="mic-btn" disabled>🎤 Enable Microphone</button>
+                <button class="control-btn btn-secondary" id="reset-btn">Reset Metrics</button>
+            </div>
+
+            <div class="info-panel" style="background: #f8f9ff; border-radius: 15px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #333;">💡 How to Use</h3>
+                <ol style="color: #666; line-height: 1.8; margin-left: 20px;">
+                    <li>Select an avatar from the dropdown</li>
+                    <li>Click "Connect Avatar" to establish connection</li>
+                    <li>Click "Enable Microphone" and speak naturally</li>
+                    <li>Watch the avatar lip-sync in real-time!</li>
+                </ol>
+            </div>
+            
+            <div class="metrics-panel">
+                <h3 style="margin-bottom: 15px; color: #333;">📊 Performance Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="fps-metric">0</div>
+                        <div class="metric-label">FPS</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="latency-metric">0ms</div>
+                        <div class="metric-label">Latency</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="frames-metric">0</div>
+                        <div class="metric-label">Frames</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="drops-metric">0</div>
+                        <div class="metric-label">Drops</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="quality-metric">-</div>
+                        <div class="metric-label">Quality</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="state-metric">idle</div>
+                        <div class="metric-label">State</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
