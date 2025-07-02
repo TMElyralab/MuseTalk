@@ -7,12 +7,11 @@ from datetime import datetime
 
 from models.messages import (
     MessageType, parse_message, ErrorCode,
-    InitMessage, GenerateMessage, StateChangeMessage, 
-    ActionMessage, CloseMessage,
+    InitMessage, GenerateMessage, StateChangeMessage, CloseMessage,
     InitSuccessResponse, VideoFrameResponse, StateChangedResponse,
-    ActionFrameResponse, ActionTriggeredResponse, CloseAckResponse, ErrorResponse,
+    CloseAckResponse, ErrorResponse,
     InitSuccessData, VideoFrameData, StateChangedData,
-    ActionFrameData, ActionTriggeredData, CloseAckData, ErrorData, CloseReason
+    CloseAckData, ErrorData, CloseReason
 )
 from models.session import Session, SessionStatus, AvatarInfo
 from services.avatar_service import AvatarService
@@ -44,7 +43,6 @@ class MessageHandler:
             MessageType.INIT: self.handle_init,
             MessageType.GENERATE: self.handle_generate,
             MessageType.STATE_CHANGE: self.handle_state_change,
-            MessageType.ACTION: self.handle_action,
             MessageType.CLOSE: self.handle_close,
         }
     
@@ -249,43 +247,6 @@ class MessageHandler:
                 f"State change failed: {str(e)}"
             )
     
-    async def handle_action(self, session: Session, message: ActionMessage) -> Dict[str, Any]:
-        """Handle ACTION message."""
-        try:
-            # Check if action already in progress
-            if session.state.action_in_progress:
-                return self._create_error_response(
-                    session.session_id,
-                    ErrorCode.INVALID_MESSAGE,
-                    "Action already in progress"
-                )
-            
-            # Start action based on action_index
-            action_name = f"action_{message.data.action_index}"
-            session.start_action(action_name)
-            
-            # Mark action as inserted into stream
-            # The actual action video will be handled by the continuous streaming logic
-            
-            # Create response
-            response = ActionTriggeredResponse(
-                session_id=session.session_id,
-                data=ActionTriggeredData(
-                    action_index=message.data.action_index,
-                    inserted=True
-                )
-            )
-            
-            return response.model_dump()
-            
-        except Exception as e:
-            session.state.action_in_progress = None
-            print(f"Action error: {e}")
-            return self._create_error_response(
-                session.session_id,
-                ErrorCode.INTERNAL_ERROR,
-                f"Action failed: {str(e)}"
-            )
     
     async def handle_close(self, session: Session, message: CloseMessage) -> Dict[str, Any]:
         """Handle CLOSE message."""

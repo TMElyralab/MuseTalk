@@ -132,7 +132,7 @@ components:
                   items:
                     type: string
                   description: List of available base videos for this user
-                  example: ["idle_0", "idle_1", "idle_2", "speaking_0", "speaking_1", "action_1"]
+                  example: ["idle_0", "idle_1", "idle_2", "speaking_0", "speaking_1"]
                   
     # GENERATE Message - Client to Server
     GenerateMessage:
@@ -193,7 +193,7 @@ components:
       properties:
         type:
           type: string
-          enum: [idle, speaking, action]
+          enum: [idle, speaking]
           description: Current video state type
           example: "speaking"
         base_video:
@@ -241,7 +241,7 @@ components:
               properties:
                 target_state:
                   type: string
-                  enum: [idle, speaking, action]
+                  enum: [idle, speaking]
                   description: Target state to transition to
                   example: "speaking"
                 base_video:
@@ -265,65 +265,13 @@ components:
               properties:
                 current_state:
                   type: string
-                  enum: [idle, speaking, action]
+                  enum: [idle, speaking]
                   description: Current state after transition
                   example: "speaking"
                 current_video:
                   type: string
                   description: Current base video in use
                   example: "speaking_1"
-                  
-    # ACTION Message - Client to Server
-    ActionMessage:
-      allOf:
-        - $ref: '#/components/schemas/BaseMessage'
-        - type: object
-          properties:
-            type:
-              type: string
-              enum: [ACTION]
-              example: "ACTION"
-            data:
-              type: object
-              required: [action_type, audio_chunk]
-              properties:
-                action_type:
-                  type: string
-                  enum: [action_1, action_2]
-                  description: Predefined action to trigger
-                  example: "action_1"
-                audio_chunk:
-                  $ref: '#/components/schemas/AudioChunk'
-                  
-    # ACTION_FRAME Response - Server to Client
-    ActionFrameResponse:
-      allOf:
-        - $ref: '#/components/schemas/BaseMessage'
-        - type: object
-          properties:
-            type:
-              type: string
-              enum: [ACTION_FRAME]
-              example: "ACTION_FRAME"
-            data:
-              type: object
-              required: [frame_data, frame_timestamp, action_progress]
-              properties:
-                frame_data:
-                  type: string
-                  format: base64
-                  description: Base64 encoded H.264 video frame
-                frame_timestamp:
-                  type: integer
-                  description: Frame timestamp in milliseconds
-                  example: 40
-                action_progress:
-                  type: number
-                  format: float
-                  minimum: 0.0
-                  maximum: 1.0
-                  description: Action completion progress (0.0 to 1.0)
-                  example: 0.1
                   
     # CLOSE Message - Client to Server
     CloseMessage:

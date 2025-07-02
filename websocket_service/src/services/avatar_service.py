@@ -18,7 +18,7 @@ class AvatarService:
     """Service for managing user avatars and base videos."""
     
     def __init__(self, 
-                 avatars_dir: str = "../results/v15/avatars",
+                 avatars_dir: str = "avatars",
                  cache_size: int = 10):
         """
         Initialize avatar service.
@@ -81,8 +81,11 @@ class AvatarService:
             return self._create_mock_avatar(user_id)
         
         try:
-            # Load avatar info
-            info_path = avatar_path / "avatar_info.json"
+            # Load avatar info - check for both formats
+            info_path = avatar_path / "avator_info.json"  # Note: realtime_inference uses "avator"
+            if not info_path.exists():
+                info_path = avatar_path / "avatar_info.json"  # Fallback to standard spelling
+            
             if info_path.exists():
                 with open(info_path, 'r') as f:
                     info_data = json.load(f)

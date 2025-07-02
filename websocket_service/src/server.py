@@ -12,7 +12,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status, UploadFile, File, Form, BackgroundTasks
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -29,7 +29,6 @@ from handlers.message_handler import MessageHandler
 from services.avatar_service import AvatarService
 from services.audio_service import AudioService
 from services.video_service import VideoService
-from services.video_processing_service import VideoProcessingService
 
 
 # Load environment variables
@@ -93,7 +92,6 @@ settings = Settings()
 avatar_service: Optional[AvatarService] = None
 audio_service: Optional[AudioService] = None
 video_service: Optional[VideoService] = None
-video_processing_service: Optional[VideoProcessingService] = None
 message_handler: Optional[MessageHandler] = None
 connection_handler: Optional[ConnectionHandler] = None
 
@@ -101,7 +99,7 @@ connection_handler: Optional[ConnectionHandler] = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    global avatar_service, audio_service, video_service, video_processing_service, message_handler, connection_handler
+    global avatar_service, audio_service, video_service, message_handler, connection_handler
     
     print("Starting MuseTalk WebSocket Server...")
     
@@ -114,7 +112,6 @@ async def lifespan(app: FastAPI):
     # Create placeholder services that will be replaced once models are loaded
     audio_service = None
     video_service = None
-    video_processing_service = None
     message_handler = None
     connection_handler = None
     
@@ -130,7 +127,7 @@ async def lifespan(app: FastAPI):
 
 async def load_models_background():
     """Load models in background to avoid blocking server startup."""
-    global audio_service, video_service, video_processing_service, message_handler, connection_handler
+    global audio_service, video_service, message_handler, connection_handler
     
     try:
         print("Loading MuseTalk models in background...")
@@ -149,8 +146,6 @@ async def load_models_background():
         )
         print("Video service initialized")
         
-        video_processing_service = VideoProcessingService()
-        print("Video processing service initialized")
         
         # Initialize handlers
         message_handler = MessageHandler(
@@ -214,7 +209,6 @@ async def health_check():
         "avatar": avatar_service is not None,
         "audio": audio_service is not None,
         "video": video_service is not None,
-        "video_processing": video_processing_service is not None,
         "message_handler": message_handler is not None,
         "connection_handler": connection_handler is not None
     }
@@ -288,158 +282,12 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
     await connection_handler.handle_connection(websocket, user_id)
 
 
-@app.post("/upload_video")
-async def upload_video(
-    background_tasks: BackgroundTasks,
-    file: UploadFile = File(...),
-    user_id: Optional[str] = Form(None)
-):
-    """
-    Upload video for avatar creation.
-    
-    This endpoint accepts a single video file and automatically generates
-    all required avatar videos (idle, speaking, action) from it.
-    """
-    if not video_processing_service:
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Video processing service not initialized"}
-        )
-    
-    # Validate file type
-    if not file.content_type or not file.content_type.startswith("video/"):
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Invalid file type. Please upload a video file."}
-        )
-    
-    # Generate user_id if not provided
-    if not user_id:
-        user_id = f"user_{os.urandom(4).hex()}"
-    
-    # Save uploaded file
-    upload_dir = Path(settings.avatars_dir) / "uploads"
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    
-    file_path = upload_dir / f"{user_id}_{file.filename}"
-    
-    try:
-        with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
-        
-        # Start background processing
-        background_tasks.add_task(
-            process_video_background,
-            str(file_path),
-            user_id,
-            settings.avatars_dir
-        )
-        
-        return {
-            "status": "processing",
-            "user_id": user_id,
-            "message": "Video uploaded successfully. Processing started.",
-            "estimated_time": "2-5 minutes"
-        }
-        
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Failed to upload file: {str(e)}"}
-        )
 
 
-@app.get("/processing_status/{user_id}")
-async def get_processing_status(user_id: str):
-    """
-    Get processing status for a user's avatar.
-    """
-    user_dir = Path(settings.avatars_dir) / user_id
-    avatar_info_path = user_dir / "avatar_info.json"
-    
-    if avatar_info_path.exists():
-        try:
-            with open(avatar_info_path, 'r') as f:
-                metadata = json.load(f)
-            
-            return {
-                "status": "completed",
-                "user_id": user_id,
-                "avatar_videos": metadata.get("avatar_videos", []),
-                "processing_time": metadata.get("processed_at"),
-                "available_for_testing": True
-            }
-        except Exception as e:
-            return JSONResponse(
-                status_code=500,
-                content={"error": f"Error reading avatar info: {str(e)}"}
-            )
-    else:
-        # Check if processing
-        upload_dir = Path(settings.avatars_dir) / "uploads"
-        upload_files = list(upload_dir.glob(f"{user_id}_*"))
-        
-        if upload_files:
-            return {
-                "status": "processing",
-                "user_id": user_id,
-                "message": "Avatar is being processed. Please wait...",
-                "available_for_testing": False
-            }
-        else:
-            return JSONResponse(
-                status_code=404,
-                content={"error": "User not found or video not uploaded"}
-            )
 
 
-async def process_video_background(video_path: str, user_id: str, output_base_dir: str):
-    """Background task for video processing."""
-    try:
-        print(f"Starting background processing for user {user_id}")
-        
-        result = await video_processing_service.process_video(
-            video_path, user_id, output_base_dir
-        )
-        
-        if result["success"]:
-            print(f"Processing completed successfully for user {user_id}")
-            
-            # Clean up uploaded file
-            try:
-                os.remove(video_path)
-            except:
-                pass
-        else:
-            print(f"Processing failed for user {user_id}: {result.get('error')}")
-            
-    except Exception as e:
-        print(f"Background processing error for user {user_id}: {e}")
 
 
-@app.post("/prepare_avatar/{user_id}")
-async def prepare_avatar(user_id: str, video_path: str):
-    """
-    Prepare avatar for user (legacy endpoint for testing).
-    
-    This would normally be part of a separate avatar preparation service.
-    """
-    if not avatar_service:
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Service not initialized"}
-        )
-    
-    success = await avatar_service.prepare_avatar(user_id, video_path)
-    
-    if success:
-        return {"status": "success", "user_id": user_id}
-    else:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Avatar preparation failed"}
-        )
 
 
 def main():

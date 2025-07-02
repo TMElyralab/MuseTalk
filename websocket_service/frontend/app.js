@@ -1,7 +1,7 @@
 class MuseTalkAvatarApp {
     constructor() {
         this.websocket = null;
-        this.userId = null;
+        this.userId = 'demo_user'; // Use a preset user ID for demo
         this.sessionId = null;
         this.isConnected = false;
         this.micEnabled = false;
@@ -22,18 +22,10 @@ class MuseTalkAvatarApp {
         };
         
         this.initializeEventListeners();
-        this.setupDragAndDrop();
     }
 
     initializeEventListeners() {
-        // File input
-        document.getElementById('file-input').addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                this.handleVideoUpload(e.target.files[0]);
-            }
-        });
-
-        // Testing controls
+        // Connection controls
         document.getElementById('connect-btn').addEventListener('click', () => {
             this.connectToAvatar();
         });
@@ -42,257 +34,29 @@ class MuseTalkAvatarApp {
             this.toggleMicrophone();
         });
 
-        document.getElementById('action1-btn').addEventListener('click', () => {
-            this.triggerAction(1);
-        });
-
-        document.getElementById('action2-btn').addEventListener('click', () => {
-            this.triggerAction(2);
-        });
-
         document.getElementById('reset-btn').addEventListener('click', () => {
             this.resetMetrics();
         });
-    }
-
-    setupDragAndDrop() {
-        const uploadZone = document.getElementById('upload-zone');
         
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.classList.add('dragover');
-        });
-
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
-        });
-
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.classList.remove('dragover');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type.startsWith('video/')) {
-                this.handleVideoUpload(files[0]);
-            } else {
-                alert('Please upload a valid video file.');
+        // User selection
+        document.getElementById('user-select').addEventListener('change', (e) => {
+            this.userId = e.target.value;
+            // Disconnect if connected to switch users
+            if (this.isConnected) {
+                this.disconnect();
+                alert('Please reconnect to use the new avatar');
             }
         });
     }
 
-    async handleVideoUpload(file) {
-        try {
-            // Validate file
-            if (!file.type.startsWith('video/')) {
-                this.showError('Invalid file type', 'Please select a video file (MP4, MOV, AVI, etc.).');
-                return;
-            }
 
-            // Check file size (max 100MB)
-            if (file.size > 100 * 1024 * 1024) {
-                this.showError('File too large', 'Video file is too large. Please select a file under 100MB.');
-                return;
-            }
 
-            // Check duration (rough estimate based on file size)
-            const duration = await this.getVideoDuration(file);
-            if (duration < 10 || duration > 120) {
-                if (!confirm(`Video duration appears to be ${Math.round(duration)}s. Recommended: 30-60s. Continue anyway?`)) {
-                    return;
-                }
-            }
 
-            this.showProcessingSection();
-            await this.simulateProcessing(file);
-            
-        } catch (error) {
-            console.error('Error handling video upload:', error);
-            this.showError('Upload Error', `Failed to process video: ${error.message}`);
-            this.resetToUploadSection();
-        }
-    }
 
-    async getVideoDuration(file) {
-        return new Promise((resolve) => {
-            const video = document.createElement('video');
-            video.onloadedmetadata = () => {
-                resolve(video.duration);
-            };
-            video.onerror = () => {
-                resolve(30); // Default if unable to read
-            };
-            video.src = URL.createObjectURL(file);
-        });
-    }
 
-    showProcessingSection() {
-        document.getElementById('upload-section').style.display = 'none';
-        document.getElementById('processing-section').style.display = 'block';
-    }
 
-    async simulateProcessing(file) {
-        const steps = [
-            'step-upload',
-            'step-analyze', 
-            'step-face',
-            'step-audio',
-            'step-segment',
-            'step-generate',
-            'step-complete'
-        ];
 
-        const progressBar = document.getElementById('progress-fill');
-        
-        // Generate user ID
-        this.userId = this.generateUserId();
-        document.getElementById('user-id-display').textContent = this.userId;
 
-        // Process each step
-        for (let i = 0; i < steps.length; i++) {
-            const stepId = steps[i];
-            const step = document.getElementById(stepId);
-            
-            // Mark current step as active
-            step.classList.add('active');
-            
-            // Update progress bar
-            const progress = ((i + 1) / steps.length) * 100;
-            progressBar.style.width = `${progress}%`;
-            
-            // Simulate processing time
-            let delay = 2000; // Base delay
-            if (stepId === 'step-upload') delay = 1000;
-            else if (stepId === 'step-generate') delay = 3000;
-            else if (stepId === 'step-complete') delay = 500;
-            
-            if (i < steps.length - 1) {
-                await this.uploadAndProcessVideo(file, stepId);
-                await this.delay(delay);
-            } else {
-                // Final step
-                await this.delay(delay);
-            }
-            
-            // Mark as completed
-            step.classList.remove('active');
-            step.classList.add('completed');
-        }
-
-        // Show testing section after completion
-        await this.delay(1000);
-        this.showTestingSection();
-    }
-
-    async uploadAndProcessVideo(file, currentStep) {
-        if (currentStep === 'step-upload') {
-            // Actually upload the file to the backend
-            console.log('Uploading video file:', file.name);
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('user_id', this.userId);
-
-            try {
-                const response = await fetch('/upload_video', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    console.log('Upload successful:', result);
-                    this.userId = result.user_id; // Update with server-assigned user_id
-                    document.getElementById('user-id-display').textContent = this.userId;
-                    
-                    // Start polling for processing status
-                    this.startProcessingStatusPolling();
-                } else {
-                    throw new Error(result.error || 'Upload failed');
-                }
-            } catch (error) {
-                console.error('Upload error:', error);
-                alert(`Upload failed: ${error.message}`);
-                throw error;
-            }
-        } else {
-            // For other steps, just log (backend handles the processing)
-            console.log(`Processing step: ${currentStep}`);
-        }
-    }
-
-    startProcessingStatusPolling() {
-        let pollCount = 0;
-        const maxPolls = 150; // 5 minutes maximum (150 * 2 seconds)
-        
-        // Poll processing status every 2 seconds
-        this.processingStatusInterval = setInterval(async () => {
-            pollCount++;
-            
-            try {
-                const response = await fetch(`/processing_status/${this.userId}`);
-                const status = await response.json();
-                
-                if (response.ok) {
-                    if (status.status === 'completed') {
-                        // Processing complete
-                        clearInterval(this.processingStatusInterval);
-                        console.log('Processing completed:', status);
-                        this.completeProcessing();
-                    } else if (status.status === 'processing') {
-                        // Still processing
-                        console.log('Still processing...');
-                        this.updateProcessingProgress(Math.min(95, (pollCount / maxPolls) * 100));
-                    }
-                } else {
-                    throw new Error(status.error || 'Status check failed');
-                }
-                
-                // Timeout check
-                if (pollCount >= maxPolls) {
-                    clearInterval(this.processingStatusInterval);
-                    throw new Error('Processing timeout - avatar creation took too long');
-                }
-                
-            } catch (error) {
-                console.error('Error checking processing status:', error);
-                clearInterval(this.processingStatusInterval);
-                this.showError('Processing Error', error.message);
-                this.resetToUploadSection();
-            }
-        }, 2000);
-    }
-
-    updateProcessingProgress(percentage) {
-        const progressBar = document.getElementById('progress-fill');
-        if (progressBar) {
-            progressBar.style.width = `${percentage}%`;
-        }
-    }
-
-    completeProcessing() {
-        // Complete all processing steps
-        const steps = [
-            'step-upload', 'step-analyze', 'step-face', 
-            'step-audio', 'step-segment', 'step-generate', 'step-complete'
-        ];
-        
-        steps.forEach(stepId => {
-            const step = document.getElementById(stepId);
-            if (step) {
-                step.classList.remove('active');
-                step.classList.add('completed');
-            }
-        });
-        
-        // Update progress to 100%
-        this.updateProcessingProgress(100);
-        
-        // Show testing section after a short delay
-        setTimeout(() => {
-            this.showTestingSection();
-        }, 1000);
-    }
 
     showError(title, message) {
         // Close any existing error first
@@ -361,51 +125,8 @@ class MuseTalkAvatarApp {
         }
     }
 
-    resetToUploadSection() {
-        // Reset to upload section
-        document.getElementById('processing-section').style.display = 'none';
-        document.getElementById('testing-section').style.display = 'none';
-        document.getElementById('upload-section').style.display = 'block';
-        
-        // Reset progress
-        const progressBar = document.getElementById('progress-fill');
-        if (progressBar) {
-            progressBar.style.width = '0%';
-        }
-        
-        // Reset processing steps
-        const steps = [
-            'step-upload', 'step-analyze', 'step-face', 
-            'step-audio', 'step-segment', 'step-generate', 'step-complete'
-        ];
-        
-        steps.forEach(stepId => {
-            const step = document.getElementById(stepId);
-            if (step) {
-                step.classList.remove('active', 'completed');
-            }
-        });
-        
-        // Clear any intervals
-        if (this.processingStatusInterval) {
-            clearInterval(this.processingStatusInterval);
-            this.processingStatusInterval = null;
-        }
-        
-        // Reset file input
-        document.getElementById('file-input').value = '';
-    }
 
-    generateUserId() {
-        // Generate a user ID with UUID format
-        const uuid = this.generateSessionId();
-        return 'user_' + uuid.substring(0, 8);
-    }
 
-    showTestingSection() {
-        document.getElementById('processing-section').style.display = 'none';
-        document.getElementById('testing-section').style.display = 'block';
-    }
 
     async connectToAvatar() {
         if (this.isConnected) {
@@ -422,6 +143,9 @@ class MuseTalkAvatarApp {
             status.textContent = 'Connecting...';
             status.className = 'connection-status status-connecting';
 
+            // Get selected user
+            this.userId = document.getElementById('user-select').value;
+            
             // Connect to WebSocket
             const wsUrl = `ws://localhost:8000/musetalk/v1/ws/${this.userId}`;
             this.websocket = new WebSocket(wsUrl);
@@ -495,9 +219,6 @@ class MuseTalkAvatarApp {
                 case 'STATE_CHANGED':
                     this.handleStateChanged(message);
                     break;
-                case 'ACTION_TRIGGERED':
-                    this.handleActionTriggered(message);
-                    break;
                 case 'ERROR':
                     this.handleError(message);
                     break;
@@ -528,11 +249,7 @@ class MuseTalkAvatarApp {
         
         // Enable controls
         document.getElementById('mic-btn').disabled = false;
-        document.getElementById('action1-btn').disabled = false;
-        document.getElementById('action2-btn').disabled = false;
         document.getElementById('mic-btn').classList.remove('btn-disabled');
-        document.getElementById('action1-btn').classList.remove('btn-disabled');
-        document.getElementById('action2-btn').classList.remove('btn-disabled');
 
         // Start metrics tracking
         this.metrics.startTime = Date.now();
@@ -594,10 +311,6 @@ class MuseTalkAvatarApp {
         console.log('State changed to:', state);
     }
 
-    handleActionTriggered(message) {
-        const actionIndex = message.data.action_index;
-        console.log(`Action ${actionIndex} triggered`);
-    }
 
     handleError(message) {
         const errorCode = message.data.code;
@@ -625,11 +338,7 @@ class MuseTalkAvatarApp {
         
         // Disable controls
         document.getElementById('mic-btn').disabled = true;
-        document.getElementById('action1-btn').disabled = true;
-        document.getElementById('action2-btn').disabled = true;
         document.getElementById('mic-btn').classList.add('btn-disabled');
-        document.getElementById('action1-btn').classList.add('btn-disabled');
-        document.getElementById('action2-btn').classList.add('btn-disabled');
 
         // Disable microphone if enabled
         if (this.micEnabled) {
@@ -762,10 +471,6 @@ class MuseTalkAvatarApp {
                     duration_ms: 40,
                     data: audioBase64
                 },
-                video_state: {
-                    type: 'speaking',
-                    base_video: 'speaking_0'
-                }
             }
         };
 
@@ -781,19 +486,6 @@ class MuseTalkAvatarApp {
         return btoa(binary);
     }
 
-    triggerAction(actionIndex) {
-        if (!this.isConnected || !this.websocket) return;
-
-        const actionMessage = {
-            type: 'ACTION',
-            session_id: this.sessionId,
-            data: {
-                action_index: actionIndex
-            }
-        };
-
-        this.websocket.send(JSON.stringify(actionMessage));
-    }
 
     startMetricsUpdate() {
         setInterval(() => {
@@ -827,22 +519,6 @@ class MuseTalkAvatarApp {
 
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
-    }
-}
-
-// Global functions
-function goBackToUpload() {
-    // Reset to upload section
-    document.getElementById('testing-section').style.display = 'none';
-    document.getElementById('processing-section').style.display = 'none';
-    document.getElementById('upload-section').style.display = 'block';
-    
-    // Reset file input
-    document.getElementById('file-input').value = '';
-    
-    // Disconnect if connected
-    if (window.app && window.app.isConnected) {
-        window.app.disconnect();
     }
 }
 
