@@ -235,6 +235,7 @@ class Avatar:
                 cv2.imwrite(f"{self.avatar_path}/tmp/{str(self.idx).zfill(8)}.png", combine_frame)
             self.idx = self.idx + 1
 
+    @torch.no_grad()
     def inference(self, audio_path, out_vid_name, fps, skip_save_images):
         os.makedirs(self.avatar_path + '/tmp', exist_ok=True)
         print("start inference")
