@@ -118,7 +118,8 @@ def get_landmark_and_bbox(img_list,upperbondrange =0):
             if upperbondrange != 0:
                 half_face_coord[1] = upperbondrange+half_face_coord[1] #手动调整  + 向下（偏29）  - 向上（偏28）
             half_face_dist = np.max(face_land_mark[:,1]) - half_face_coord[1]
-            upper_bond = half_face_coord[1]-half_face_dist
+            min_upper_bond = 0
+            upper_bond = max(min_upper_bond, half_face_coord[1] - half_face_dist)
             
             f_landmark = (np.min(face_land_mark[:, 0]),int(upper_bond),np.max(face_land_mark[:, 0]),np.max(face_land_mark[:,1]))
             x1, y1, x2, y2 = f_landmark
