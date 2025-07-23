@@ -1,0 +1,21 @@
+build:
+  gpu: true
+  cog_runtime: true
+  python_version: "3.10"
+  system_packages:
+    - libgl1-mesa-glx
+    - libglib2.0-0
+    - ninja-build
+    - gcc
+    - g++
+    - ffmpeg
+  
+  python_requirements: requirements.txt
+  run:
+    - pip install --no-cache-dir -U openmim
+    - mim install mmengine
+    - mim install "mmcv==2.0.1"
+    - mim install "mmdet==3.1.0"
+    - mim install "mmpose==1.1.0"
+
+predict: "predict.py:Predictor"
