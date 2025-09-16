@@ -15,6 +15,7 @@ from decord.ndarray import cpu
 
 from musetalk.data.sample_method import get_src_idx, shift_landmarks_to_face_coordinates, resize_landmark 
 from musetalk.data import audio 
+from musetalk.utils.audio_utils import ensure_wav
 
 syncnet_mel_step_size = math.ceil(16 / 5 * 16)  # latentsync
 
@@ -171,7 +172,8 @@ class FaceDataset(Dataset):
         """
         if not os.path.exists(wav_path):
             return None
-        audio_input_librosa, sampling_rate = librosa.load(wav_path, sr=16000)
+        wav_path_converted = ensure_wav(wav_path)
+        audio_input_librosa, sampling_rate = librosa.load(wav_path_converted, sr=16000)
         assert sampling_rate == 16000
 
         while start_index >= 25 * 30:
@@ -206,11 +208,12 @@ class FaceDataset(Dataset):
         if not os.path.exists(wav_path):
             return None
 
-        audio_input, sampling_rate = librosa.load(wav_path, sr=16000)
+        wav_path_converted = ensure_wav(wav_path)
+        audio_input_librosa, sampling_rate = librosa.load(wav_path_converted, sr=16000)
         assert sampling_rate == 16000
 
-        audio_input = self.mel_feature_extractor(audio_input)
-        return audio_input, start_index
+        audio_mel = self.mel_feature_extractor(audio_input_librosa)
+        return audio_mel, start_index
 
     def mel_feature_extractor(self, audio_input):
         """Extract mel spectrogram features
