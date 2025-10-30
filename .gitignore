@@ -5,6 +5,21 @@
 *.pyc
 .ipynb_checkpoints
 results/
+data/audio/*.wav
+data/video/*.mp4
+data/video/*.mov
+data/video/ma/*.mp4
+avatars.zip
+avatars/
+avator_1_skipImage.zip
+avator_1_skipImage/
+cuda_11.7.0_515.43.04_linux.run
+eaudio --start
+ffmpeg-7.0.2-amd64-static/
+ffmpeg-release-amd64-static.tar.xz
+musetalk.zip
+scripts.zip
+venv_PhotonSync/
 models/
 **/__pycache__/
 *.py[cod]

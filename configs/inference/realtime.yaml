@@ -1,10 +1,8 @@
-avator_1:
- preparation: True # your can set it to False if you want to use the existing avator, it will save time
- bbox_shift: 5
- video_path: "data/video/yongen.mp4"
+avatar_3:
+ preparation: False
+ bbox_shift: 0
+ batch_size: 16  
+ video_path: "data/video/aiden-glasses-processed.mp4"
  audio_clips:
-     audio_0: "data/audio/yongen.wav"
-     audio_1: "data/audio/eng.wav"
- 
-  
-
+     audio_0: "data/audio/sun.wav"
+     audio_1: "data/audio/yongen.wav"
