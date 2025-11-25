@@ -10,6 +10,7 @@ huggingface_hub==0.30.2
 librosa==0.11.0
 einops==0.8.1
 gradio==5.24.0
+chumpy==0.71
 
 gdown
 requests
