@@ -229,7 +229,7 @@ def main(cfg):
                     
                     # Calculate adapted weight based on audio-visual similarity
                     if cfg.use_adapted_weight:
-                        vision_embed_gt = syncnet.get_vision_embed(gt_frames)
+                        vision_embed_gt = syncnet.get_image_embed(gt_frames)
                         image_audio_sim_gt = F.cosine_similarity(
                             audio_embed, 
                             vision_embed_gt, 
