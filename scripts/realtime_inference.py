@@ -181,9 +181,9 @@ class Avatar:
             latents = vae.get_latents_for_unet(resized_crop_frame)
             input_latent_list.append(latents)
 
-        self.frame_list_cycle = frame_list + frame_list[::-1]
-        self.coord_list_cycle = coord_list + coord_list[::-1]
-        self.input_latent_list_cycle = input_latent_list + input_latent_list[::-1]
+        self.frame_list_cycle = frame_list
+        self.coord_list_cycle = coord_list
+        self.input_latent_list_cycle = input_latent_list
         self.mask_coords_list_cycle = []
         self.mask_list_cycle = []
 
@@ -211,6 +211,9 @@ class Avatar:
 
     def process_frames(self, res_frame_queue, video_len, skip_save_images):
         print(video_len)
+        prev_combine_frame = None  # Store previous frame for temporal smoothing
+        temporal_alpha = 0.3  # Smoothing factor: 0.3 means 30% previous + 70% current
+
         while True:
             if self.idx >= video_len - 1:
                 break
@@ -224,12 +227,29 @@ class Avatar:
             ori_frame = copy.deepcopy(self.frame_list_cycle[self.idx % (len(self.frame_list_cycle))])
             x1, y1, x2, y2 = bbox
             try:
-                res_frame = cv2.resize(res_frame.astype(np.uint8), (x2 - x1, y2 - y1))
+                # Use LANCZOS4 for higher quality upscaling of lip-sync region
+                res_frame = cv2.resize(res_frame.astype(np.uint8), (x2 - x1, y2 - y1), interpolation=cv2.INTER_LANCZOS4)
             except:
                 continue
             mask = self.mask_list_cycle[self.idx % (len(self.mask_list_cycle))]
             mask_crop_box = self.mask_coords_list_cycle[self.idx % (len(self.mask_coords_list_cycle))]
             combine_frame = get_image_blending(ori_frame,res_frame,bbox,mask,mask_crop_box)
+
+            # Apply sharpening to the lip-sync region to match rest of video
+            # Extract the blended region and apply unsharp mask
+            lip_region = combine_frame[y1:y2, x1:x2]
+            gaussian = cv2.GaussianBlur(lip_region, (0, 0), 2.0)
+            sharpened_lip = cv2.addWeighted(lip_region, 1.5, gaussian, -0.5, 0)
+            combine_frame[y1:y2, x1:x2] = sharpened_lip
+
+            # Apply temporal smoothing to reduce stuttering/jitter
+            if prev_combine_frame is not None:
+                combine_frame = cv2.addWeighted(
+                    prev_combine_frame, temporal_alpha,
+                    combine_frame, 1 - temporal_alpha,
+                    0
+                )
+            prev_combine_frame = combine_frame.copy()
 
             if skip_save_images is False:
                 cv2.imwrite(f"{self.avatar_path}/tmp/{str(self.idx).zfill(8)}.png", combine_frame)
@@ -292,13 +312,14 @@ class Avatar:
                 time.time() - start_time))
 
         if out_vid_name is not None and args.skip_save_images is False:
-            # optional
-            cmd_img2video = f"ffmpeg -y -v warning -r {fps} -f image2 -i {self.avatar_path}/tmp/%08d.png -vcodec libx264 -vf format=yuv420p -crf 18 {self.avatar_path}/temp.mp4"
+            # optional - using CRF 15 for higher quality lip-sync preservation
+            cmd_img2video = f"ffmpeg -y -v warning -r {fps} -f image2 -i {self.avatar_path}/tmp/%08d.png -vcodec libx264 -vf format=yuv420p -crf 15 {self.avatar_path}/temp.mp4"
             print(cmd_img2video)
             os.system(cmd_img2video)
 
             output_vid = os.path.join(self.video_out_path, out_vid_name + ".mp4")  # on
-            cmd_combine_audio = f"ffmpeg -y -v warning -i {audio_path} -i {self.avatar_path}/temp.mp4 {output_vid}"
+            # Explicitly set output fps to match generated frames and improve quality
+            cmd_combine_audio = f"ffmpeg -y -v warning -i {audio_path} -i {self.avatar_path}/temp.mp4 -c:v libx264 -preset slow -crf 18 -r {fps} -c:a aac -b:a 192k {output_vid}"
             print(cmd_combine_audio)
             os.system(cmd_combine_audio)
 
