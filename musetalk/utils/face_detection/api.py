@@ -63,7 +63,8 @@ class FaceAlignment:
 
 
         # Get the face detector
-        face_detector_module = __import__('face_detection.detection.' + face_detector,
+        package_name = __name__.rsplit('.', 1)[0]
+        face_detector_module = __import__(package_name + '.detection.' + face_detector,
                                           globals(), locals(), [face_detector], 0)
         
         self.face_detector = face_detector_module.FaceDetector(device=device, verbose=verbose)

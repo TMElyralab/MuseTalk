@@ -1,0 +1,19 @@
+Metadata-Version: 1.1
+Name: chumpy
+Version: 0.70
+Summary: chumpy
+Home-page: https://github.com/mattloper/chumpy
+Author: Matthew Loper
+Author-email: matt.loper@gmail.com
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: POSIX :: Linux

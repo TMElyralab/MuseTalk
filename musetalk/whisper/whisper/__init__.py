@@ -106,7 +106,7 @@ def load_model(name: str, device: Optional[Union[str, torch.device]] = None, dow
         raise RuntimeError(f"Model {name} not found; available models = {available_models()}")
 
     with (io.BytesIO(checkpoint_file) if in_memory else open(checkpoint_file, "rb")) as fp:
-        checkpoint = torch.load(fp, map_location=device)
+        checkpoint = torch.load(fp, map_location=device, weights_only=False)
     del checkpoint_file
 
     dims = ModelDimensions(**checkpoint["dims"])

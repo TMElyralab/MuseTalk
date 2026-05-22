@@ -58,7 +58,7 @@ class AudioProcessor:
         # Trim the last segment to remove padding
         sr = 16000
         audio_fps = 50
-        fps = int(fps)
+        fps = float(fps)
         whisper_idx_multiplier = audio_fps / fps
         num_frames = math.floor((librosa_length / sr) * fps)
         actual_length = math.floor((librosa_length / sr) * audio_fps)
