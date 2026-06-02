@@ -29,8 +29,12 @@ def fast_check_ffmpeg():
 
 @torch.no_grad()
 def main(args):
-    # Configure ffmpeg path
-    if not fast_check_ffmpeg():
+    # Configure ffmpeg path - always use provided ffmpeg_path if specified
+    if args.ffmpeg_path:
+        print(f"Using ffmpeg from: {args.ffmpeg_path}")
+        path_separator = ';' if sys.platform == 'win32' else ':'
+        os.environ["PATH"] = f"{args.ffmpeg_path}{path_separator}{os.environ['PATH']}"
+    elif not fast_check_ffmpeg():
         print("Adding ffmpeg to PATH")
         # Choose path separator based on operating system
         path_separator = ';' if sys.platform == 'win32' else ':'
@@ -250,7 +254,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ffmpeg_path", type=str, default="./ffmpeg-4.4-amd64-static/", help="Path to ffmpeg executable")
+    parser.add_argument("--ffmpeg_path", type=str, default="/usr/bin", help="Path to ffmpeg executable")
     parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID to use")
     parser.add_argument("--vae_type", type=str, default="sd-vae", help="Type of VAE model")
     parser.add_argument("--unet_config", type=str, default="./models/musetalk/config.json", help="Path to UNet configuration file")

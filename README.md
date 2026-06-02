@@ -222,25 +222,28 @@ You can also download the weights manually from the following links:
 1. Download our trained [weights](https://huggingface.co/TMElyralab/MuseTalk/tree/main)
 2. Download the weights of other components:
    - [sd-vae-ft-mse](https://huggingface.co/stabilityai/sd-vae-ft-mse/tree/main)
-   - [whisper](https://huggingface.co/openai/whisper-tiny/tree/main)
+   - [whisper](https://huggingface.co/openai/whisper-tiny/tree/main) (make sure to include `preprocessor_config.json`)
    - [dwpose](https://huggingface.co/yzd-v/DWPose/tree/main)
    - [syncnet](https://huggingface.co/ByteDance/LatentSync/tree/main)
    - [face-parse-bisent](https://drive.google.com/file/d/154JgKpzCPW82qINcVieuPH3fZ2e0P812/view?pli=1)
    - [resnet18](https://download.pytorch.org/models/resnet18-5c106cde.pth)
+   - [s3fd](https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth) (rename to `s3fd.pth` and place in `models/s3fd/`)
 
 Finally, these weights should be organized in `models` as follows:
 ```
 ./models/
 ├── musetalk
-│   └── musetalk.json
+│   ├── musetalk.json
 │   └── pytorch_model.bin
 ├── musetalkV15
-│   └── musetalk.json
+│   ├── musetalk.json
 │   └── unet.pth
 ├── syncnet
 │   └── latentsync_syncnet.pt
 ├── dwpose
 │   └── dw-ll_ucoco_384.pth
+├── s3fd
+│   └── s3fd.pth
 ├── face-parse-bisent
 │   ├── 79999_iter.pth
 │   └── resnet18-5c106cde.pth
@@ -251,8 +254,13 @@ Finally, these weights should be organized in `models` as follows:
     ├── config.json
     ├── pytorch_model.bin
     └── preprocessor_config.json
-    
+
 ```
+
+> **Note:**
+> - `s3fd/s3fd.pth` is the SFD face detection model weight, download from [s3fd-619a316812.pth](https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth) and rename to `s3fd.pth`.
+> - `whisper/preprocessor_config.json` is required by `AutoFeatureExtractor`. If it is missing from the downloaded whisper weights, you can download it from [openai/whisper-tiny](https://huggingface.co/openai/whisper-tiny/blob/main/preprocessor_config.json).
+> - If you encounter `ImportError: cannot import name 'split_torch_state_dict_into_shards' from 'huggingface_hub'`, upgrade `huggingface_hub` to fix the version incompatibility: `pip install --upgrade huggingface_hub`.
 ## Quickstart
 
 ### Inference
@@ -511,6 +519,108 @@ python -m scripts.inference --inference_config configs/inference/test.yaml --bbo
 #### Combining MuseV and MuseTalk
 
 As a complete solution to virtual human generation, you are suggested to first apply [MuseV](https://github.com/TMElyralab/MuseV) to generate a video (text-to-video, image-to-video or pose-to-video) by referring [this](https://github.com/TMElyralab/MuseV?tab=readme-ov-file#text2video). Frame interpolation is suggested to increase frame rate. Then, you can use `MuseTalk` to generate a lip-sync video by referring [this](https://github.com/TMElyralab/MuseTalk?tab=readme-ov-file#inference).
+
+# Troubleshooting
+
+## New GPU Architecture (Blackwell sm_120)
+
+If you're using **NVIDIA RTX PRO 6000 Blackwell** or other new GPU with `sm_120` architecture, you'll encounter:
+
+```
+CUDA error: no kernel image is available for execution on the device
+The current PyTorch install supports CUDA capabilities sm_37 sm_50 ... sm_90.
+```
+
+This is because the default PyTorch 2.0.1 does not support the Blackwell architecture. Follow these steps:
+
+### Step 1: Upgrade PyTorch
+
+Install **PyTorch 2.6+ with CUDA 12.6/12.8** which supports `sm_120`:
+
+```bash
+# For CUDA 12.8 (tested with PyTorch 2.9.0)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+# Or for CUDA 12.6
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+```
+
+### Step 2: Reinstall mmcv for the New CUDA Version
+
+After upgrading PyTorch, the existing mmcv (compiled for older CUDA) will fail with:
+
+```
+ImportError: libcudart.so.11.0: cannot open shared object file: No such file or directory
+```
+
+**Important version constraint:** `mmdet 3.1.0` and `mmpose 1.1.0` require **mmcv 2.0.1 ~ 2.1.x**. Do **not** use mmcv 2.2.0+ as they have strict runtime version checks that will raise `AssertionError`.
+
+If `mim install mmcv` finds a pre-built wheel for your CUDA/PyTorch combo:
+```bash
+pip uninstall mmcv -y
+mim install "mmcv==2.1.0"
+```
+
+If there is **no pre-built wheel** (common for new CUDA/PyTorch combinations), install from source:
+```bash
+pip install setuptools
+pip install mmcv==2.1.0 --no-binary mmcv --no-build-isolation
+```
+
+The `--no-build-isolation` flag is required so that pip uses the `setuptools` already in your environment instead of creating an isolated build environment (which may lack `pkg_resources`).
+
+### Step 3: Verify Installation
+
+```bash
+python -c "import mmcv; import mmdet; import mmpose; print('mmcv:', mmcv.__version__); print('mmdet:', mmdet.__version__); print('mmpose:', mmpose.__version__)"
+```
+
+Expected output:
+```
+mmcv: 2.1.0
+mmdet: 3.1.0
+mmpose: 1.1.0
+```
+
+## PyTorch 2.6+ Checkpoint Loading Error
+
+If you see `_pickle.UnpicklingError: Weights only load failed` when loading dwpose checkpoint:
+
+```
+WeightsUnpickler error: Unsupported global: GLOBAL numpy.core.multiarray._reconstruct
+```
+
+This is because PyTorch 2.6+ changed `torch.load` default to `weights_only=True`. The code has been patched to handle this automatically. If you encounter this issue, make sure you have the latest version of `preprocessing.py`.
+
+## FFmpeg Missing PNG Encoder
+
+```
+[vost#0:0] Automatic encoder selection failed Default encoder for format image2 (codec png) is probably disabled.
+Error opening output files: Encoder not found
+```
+
+This usually happens when FFmpeg is compiled without certain encoders (e.g., Windows static builds with `--disable-x86asm`).
+
+**Solution 1**: Use system FFmpeg:
+```bash
+sudo apt-get install ffmpeg  # Ubuntu/Debian
+```
+
+**Solution 2**: Specify FFmpeg path when running inference:
+```bash
+python -m scripts.inference --ffmpeg_path /usr/bin ...
+```
+
+**Solution 3**: Add system FFmpeg to PATH with higher priority:
+```bash
+export PATH=/usr/bin:$PATH
+```
+
+**Verify** your FFmpeg has PNG encoder:
+```bash
+ffmpeg -encoders | grep png
+# Should show: VF...D png  PNG (Portable Network Graphics) image
+```
 
 # Acknowledgement
 1. We thank open-source components like [whisper](https://github.com/openai/whisper), [dwpose](https://github.com/IDEA-Research/DWPose), [face-alignment](https://github.com/1adrianb/face-alignment), [face-parsing](https://github.com/zllrunning/face-parsing.PyTorch), [S3FD](https://github.com/yxlijun/S3FD.pytorch) and [LatentSync](https://huggingface.co/ByteDance/LatentSync/tree/main). 

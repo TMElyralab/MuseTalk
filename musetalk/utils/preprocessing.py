@@ -12,6 +12,17 @@ from mmpose.structures import merge_data_samples
 import torch
 from tqdm import tqdm
 
+# Monkey-patch mmengine's torch.load to disable weights_only for PyTorch 2.6+
+import mmengine.runner.checkpoint as _ckpt_module
+_orig_torch_load = torch.load
+def _patched_torch_load(*args, **kwargs):
+    if 'weights_only' not in kwargs:
+        kwargs['weights_only'] = False
+    return _orig_torch_load(*args, **kwargs)
+# Patch at module level so mmengine uses it
+torch.load = _patched_torch_load
+_ckpt_module.torch.load = _patched_torch_load
+
 # initialize the mmpose model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 config_file = './musetalk/utils/dwpose/rtmpose-l_8xb32-270e_coco-ubody-wholebody-384x288.py'
