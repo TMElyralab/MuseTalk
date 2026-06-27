@@ -117,6 +117,7 @@ def main(args):
             output_vid_name_concat = os.path.join(temp_dir, output_basename + "_concat.mp4")
             
             # Extract frames from source video
+            save_dir_full = None  # only set for video input; guards the cleanup below for image/dir inputs
             if get_file_type(video_path) == "video":
                 save_dir_full = os.path.join(temp_dir, input_basename)
                 os.makedirs(save_dir_full, exist_ok=True)
@@ -240,7 +241,8 @@ def main(args):
             shutil.rmtree(result_img_save_path)
             os.remove(temp_vid_path)
             
-            shutil.rmtree(save_dir_full)
+            if save_dir_full is not None:
+                shutil.rmtree(save_dir_full)
             if not args.saved_coord:
                 os.remove(crop_coord_save_path)
                     
