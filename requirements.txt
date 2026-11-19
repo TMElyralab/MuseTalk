@@ -18,3 +18,8 @@ imageio[ffmpeg]
 omegaconf
 ffmpeg-python
 moviepy
+
+fastapi
+uvicorn
+pydantic
+python-multipart
