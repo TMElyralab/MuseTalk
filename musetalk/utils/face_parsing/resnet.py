@@ -80,7 +80,10 @@ class Resnet18(nn.Module):
         return feat8, feat16, feat32
 
     def init_weight(self, model_path):
-        state_dict = torch.load(model_path) #modelzoo.load_url(resnet18_url)
+        # resnet18-5c106cde.pth is a legacy .tar-format checkpoint from the official
+        # torch model zoo (trusted). PyTorch 2.6+ defaults torch.load to weights_only=True,
+        # which refuses legacy .tar files unconditionally, so we opt out here. See #341.
+        state_dict = torch.load(model_path, weights_only=False) #modelzoo.load_url(resnet18_url)
         self_state_dict = self.state_dict()
         for k, v in state_dict.items():
             if 'fc' in k: continue

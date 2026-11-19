@@ -62,9 +62,9 @@ class FaceParsing():
         net = BiSeNet(resnet_path)
         if torch.cuda.is_available():
             net.cuda()
-            net.load_state_dict(torch.load(model_pth)) 
+            net.load_state_dict(torch.load(model_pth, weights_only=False))  # trusted face-parse checkpoint; see #341
         else:
-            net.load_state_dict(torch.load(model_pth, map_location=torch.device('cpu')))
+            net.load_state_dict(torch.load(model_pth, map_location=torch.device('cpu'), weights_only=False))  # see #341
         net.eval()
         return net
 
