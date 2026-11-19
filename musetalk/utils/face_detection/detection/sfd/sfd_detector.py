@@ -8,13 +8,16 @@ from .net_s3fd import s3fd
 from .bbox import *
 from .detect import *
 
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..'))
+_SFD_MODEL_PATH = os.path.join(_PROJECT_ROOT, 'models', 's3fd', 's3fd.pth')
+
 models_urls = {
     's3fd': 'https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth',
 }
 
 
 class SFDDetector(FaceDetector):
-    def __init__(self, device, path_to_detector=os.path.join(os.path.dirname(os.path.abspath(__file__)), 's3fd.pth'), verbose=False):
+    def __init__(self, device, path_to_detector=_SFD_MODEL_PATH, verbose=False):
         super(SFDDetector, self).__init__(device, verbose)
 
         # Initialise the face detector
