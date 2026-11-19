@@ -96,7 +96,7 @@ class Avatar:
                     osmakedirs([self.avatar_path, self.full_imgs_path, self.video_out_path, self.mask_out_path])
                     self.prepare_material()
                 else:
-                    self.input_latent_list_cycle = torch.load(self.latents_out_path)
+                    self.input_latent_list_cycle = torch.load(self.latents_out_path, weights_only=False)
                     with open(self.coords_path, 'rb') as f:
                         self.coord_list_cycle = pickle.load(f)
                     input_img_list = glob.glob(os.path.join(self.full_imgs_path, '*.[jpJP][pnPN]*[gG]'))
@@ -133,7 +133,7 @@ class Avatar:
                 else:
                     sys.exit()
             else:
-                self.input_latent_list_cycle = torch.load(self.latents_out_path)
+                self.input_latent_list_cycle = torch.load(self.latents_out_path, weights_only=False)
                 with open(self.coords_path, 'rb') as f:
                     self.coord_list_cycle = pickle.load(f)
                 input_img_list = glob.glob(os.path.join(self.full_imgs_path, '*.[jpJP][pnPN]*[gG]'))

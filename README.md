@@ -148,33 +148,38 @@ We also hope you note that we have not verified, maintained, or updated third-pa
 To prepare the Python environment and install additional packages such as opencv, diffusers, mmcv, etc., please follow the steps below:
 
 ### Build environment
-We recommend Python 3.10 and CUDA 11.7. Set up your environment as follows:
+We recommend Python 3.10 and CUDA 11.7 or 12.x. Set up your environment as follows:
 
 ```shell
 conda create -n MuseTalk python==3.10
 conda activate MuseTalk
 ```
 
-### Install PyTorch 2.0.1
-Choose one of the following installation methods:
+### Install PyTorch
+Install PyTorch **before** other dependencies. Choose the build that matches your GPU and CUDA:
 
 ```shell
-# Option 1: Using pip
+# Option 1: CUDA 11.8 (most GPUs, e.g. RTX 20/30 series)
 pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
 
-# Option 2: Using conda
-conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 -c pytorch -c nvidia
+# Option 2: CUDA 12.8 (RTX 50 series / Blackwell, sm_120 support)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+
+# Option 3: CPU only (slower inference)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
+**Note:** For NVIDIA RTX 5060 Ti / RTX 50 series (Blackwell), use the CUDA 12.8 index above. Older PyTorch builds do not include kernels for sm_120.
+
 ### Install Dependencies
-Install the remaining required packages:
+Install the remaining required packages (use `numpy<2` for opencv compatibility):
 
 ```shell
 pip install -r requirements.txt
 ```
 
 ### Install MMLab Packages
-Install the MMLab ecosystem packages:
+Install the MMLab ecosystem packages via OpenMIM:
 
 ```bash
 pip install --no-cache-dir -U openmim
@@ -183,6 +188,8 @@ mim install "mmcv==2.0.1"
 mim install "mmdet==3.1.0"
 mim install "mmpose==1.1.0"
 ```
+
+**Alternative (mmcv-lite):** If no pre-built mmcv wheel is available for your PyTorch/CUDA (e.g. some Windows + CUDA 12.8 setups), you can use `mmcv-lite` instead of full mmcv. The realtime inference code includes fallbacks for NMS and ROI align when using mmcv-lite.
 
 ### Setup FFmpeg
 1. [Download](https://github.com/BtbN/FFmpeg-Builds/releases) the ffmpeg-static package
@@ -324,7 +331,6 @@ Important notes for real-time inference:
 2. After preparation, the avatar will generate videos using audio clips from `audio_clips`
 3. The generation process can achieve 30fps+ on an NVIDIA Tesla V100
 4. Set `preparation` to `False` for generating more videos with the same avatar
-
 For faster generation without saving images, you can use:
 ```bash
 python -m scripts.realtime_inference --inference_config configs/inference/realtime.yaml --skip_save_images
