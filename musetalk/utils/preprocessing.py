@@ -7,16 +7,26 @@ import cv2
 import pickle
 import os
 import json
-from mmpose.apis import inference_topdown, init_model
-from mmpose.structures import merge_data_samples
 import torch
 from tqdm import tqdm
 
-# initialize the mmpose model
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-config_file = './musetalk/utils/dwpose/rtmpose-l_8xb32-270e_coco-ubody-wholebody-384x288.py'
-checkpoint_file = './models/dwpose/dw-ll_ucoco_384.pth'
-model = init_model(config_file, checkpoint_file, device=device)
+# Face landmark backend: "mmpose" (default, DWPose) or "face_alignment"
+# (pip install face-alignment, no mmcv needed). Both give the 68 iBUG points.
+LANDMARK_BACKEND = os.environ.get("MUSETALK_LANDMARK_BACKEND", "mmpose")
+
+if LANDMARK_BACKEND == "face_alignment":
+    import face_alignment
+    lm_device = "cuda" if torch.cuda.is_available() else "cpu"
+    lm_model = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False, device=lm_device)
+else:
+    from mmpose.apis import inference_topdown, init_model
+    from mmpose.structures import merge_data_samples
+
+    # initialize the mmpose model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    config_file = './musetalk/utils/dwpose/rtmpose-l_8xb32-270e_coco-ubody-wholebody-384x288.py'
+    checkpoint_file = './models/dwpose/dw-ll_ucoco_384.pth'
+    model = init_model(config_file, checkpoint_file, device=device)
 
 # initialize the face detection model
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -24,6 +34,20 @@ fa = FaceAlignment(LandmarksType._2D, flip_input=False,device=device)
 
 # maker if the bbox is not sufficient 
 coord_placeholder = (0.0,0.0,0.0,0.0)
+
+def get_face_landmarks(frame):
+    """Return the 68 face landmarks (x, y) of a BGR frame as int32."""
+    if LANDMARK_BACKEND == "face_alignment":
+        lms = lm_model.get_landmarks_from_image(frame[:, :, ::-1])
+        if not lms:
+            # no face: an empty landmark box makes the caller fall back to the detector bbox
+            return np.zeros((68, 2), dtype=np.int32)
+        return lms[0].astype(np.int32)
+    results = inference_topdown(model, frame)
+    results = merge_data_samples(results)
+    keypoints = results.pred_instances.keypoints
+    face_land_mark = keypoints[0][23:91]
+    return face_land_mark.astype(np.int32)
 
 def resize_landmark(landmark, w, h, new_w, new_h):
     w_ratio = new_w / w
@@ -53,11 +77,7 @@ def get_bbox_range(img_list,upperbondrange =0):
     average_range_minus = []
     average_range_plus = []
     for fb in tqdm(batches):
-        results = inference_topdown(model, np.asarray(fb)[0])
-        results = merge_data_samples(results)
-        keypoints = results.pred_instances.keypoints
-        face_land_mark= keypoints[0][23:91]
-        face_land_mark = face_land_mark.astype(np.int32)
+        face_land_mark = get_face_landmarks(np.asarray(fb)[0])
         
         # get bounding boxes by face detetion
         bbox = fa.get_detections_for_batch(np.asarray(fb))
@@ -94,11 +114,7 @@ def get_landmark_and_bbox(img_list,upperbondrange =0):
     average_range_minus = []
     average_range_plus = []
     for fb in tqdm(batches):
-        results = inference_topdown(model, np.asarray(fb)[0])
-        results = merge_data_samples(results)
-        keypoints = results.pred_instances.keypoints
-        face_land_mark= keypoints[0][23:91]
-        face_land_mark = face_land_mark.astype(np.int32)
+        face_land_mark = get_face_landmarks(np.asarray(fb)[0])
         
         # get bounding boxes by face detetion
         bbox = fa.get_detections_for_batch(np.asarray(fb))

@@ -184,6 +184,25 @@ mim install "mmdet==3.1.0"
 mim install "mmpose==1.1.0"
 ```
 
+### Optional: Intel GPUs (XPU) and installs without MMLab
+MuseTalk picks its device with `musetalk/utils/device.py`: CUDA first, then Intel XPU (`torch.xpu`), then CPU. Set `MUSETALK_DEVICE` to force one, for example `MUSETALK_DEVICE=cpu` or `MUSETALK_DEVICE=cuda:1` (`mps` can be forced the same way, but it is untested).
+
+If mmcv/mmpose will not install (Python 3.12, new GPUs, non-CUDA machines), set `MUSETALK_LANDMARK_BACKEND=face_alignment` to get the 68 face landmarks from the [face-alignment](https://github.com/1adrianb/face-alignment) package instead of DWPose. The default stays `mmpose`.
+
+Example setup on an Intel Arc GPU (Linux, Python 3.12):
+```shell
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/xpu
+pip install "diffusers==0.30.2" "transformers==4.46.3" "accelerate==0.34.2" "numpy<2" \
+    opencv-python soundfile librosa einops omegaconf "huggingface_hub<0.26" gdown face-alignment scipy
+export MUSETALK_LANDMARK_BACKEND=face_alignment
+# PyTorch 2.6+ refuses the legacy face-parse checkpoint by default (see #419)
+export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
+sh inference.sh v1.5 realtime
+```
+On a machine with several Intel GPUs, `ZE_AFFINITY_MASK=0` selects the first one.
+
+Tested on an Intel Arc Pro B70 (32 GB), Ubuntu 24.04, kernel 7.0, Intel compute runtime 26.31 (level-zero 1.28), PyTorch 2.14.1+xpu, Python 3.12, fp16. `scripts/inference.py` and `scripts/realtime_inference.py` both run. On a 4 s clip, `scripts/realtime_inference.py --skip_save_images` renders 100 frames in 4.0 to 4.7 s (batch 4 to 16), including warm-up. A separate streaming benchmark with a warm model reached 38 to 53 fps end to end (UNet, VAE decode and blending) at batch 4 to 16, with 84 to 255 ms to the first frame and 7 to 10 GB of VRAM.
+
 ### Setup FFmpeg
 1. [Download](https://github.com/BtbN/FFmpeg-Builds/releases) the ffmpeg-static package
 

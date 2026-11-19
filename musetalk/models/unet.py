@@ -9,6 +9,8 @@ import time
 import numpy as np
 import os
 
+from musetalk.utils.device import get_device
+
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model=384, max_len=5000):
         super(PositionalEncoding, self).__init__()
@@ -40,7 +42,7 @@ class UNet():
         if device != None:
             self.device = device
         else:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.device = get_device()
         weights = torch.load(model_path) if torch.cuda.is_available() else torch.load(model_path, map_location=self.device)
         self.model.load_state_dict(weights)
         if use_float16:

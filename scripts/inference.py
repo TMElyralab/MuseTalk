@@ -19,6 +19,7 @@ from musetalk.utils.face_parsing import FaceParsing
 from musetalk.utils.audio_processor import AudioProcessor
 from musetalk.utils.utils import get_file_type, get_video_fps, datagen, load_all_model
 from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs, coord_placeholder
+from musetalk.utils.device import get_device
 
 def fast_check_ffmpeg():
     try:
@@ -39,7 +40,7 @@ def main(args):
             print("Warning: Unable to find ffmpeg, please ensure ffmpeg is properly installed")
     
     # Set computing device
-    device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
+    device = get_device(args.gpu_id)
     # Load model weights
     vae, unet, pe = load_all_model(
         unet_model_path=args.unet_model_path, 

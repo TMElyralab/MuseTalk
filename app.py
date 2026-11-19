@@ -170,6 +170,7 @@ from musetalk.utils.face_parsing import FaceParsing
 from musetalk.utils.audio_processor import AudioProcessor
 from musetalk.utils.utils import get_file_type, get_video_fps, datagen, load_all_model
 from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs, coord_placeholder, get_bbox_range
+from musetalk.utils.device import get_device
 
 
 def fast_check_ffmpeg():
@@ -388,7 +389,7 @@ def inference(audio_path, video_path, bbox_shift, extra_margin=10, parsing_mode=
 
 
 # load model weights
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = get_device()
 vae, unet, pe = load_all_model(
     unet_model_path="./models/musetalkV15/unet.pth", 
     vae_type="sd-vae",

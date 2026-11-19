@@ -7,8 +7,11 @@ from PIL import Image
 from .model import BiSeNet
 import torchvision.transforms as transforms
 
+from musetalk.utils.device import get_device
+
 class FaceParsing():
-    def __init__(self, left_cheek_width=80, right_cheek_width=80):
+    def __init__(self, left_cheek_width=80, right_cheek_width=80, device=None):
+        self.device = device if device is not None else get_device()
         self.net = self.model_init()
         self.preprocess = self.image_preprocess()
         # Ensure all size parameters are integers
@@ -65,6 +68,7 @@ class FaceParsing():
             net.load_state_dict(torch.load(model_pth)) 
         else:
             net.load_state_dict(torch.load(model_pth, map_location=torch.device('cpu')))
+        net.to(self.device)
         net.eval()
         return net
 
@@ -82,10 +86,7 @@ class FaceParsing():
         with torch.no_grad():
             image = image.resize(size, Image.BILINEAR)
             img = self.preprocess(image)
-            if torch.cuda.is_available():
-                img = torch.unsqueeze(img, 0).cuda()
-            else:
-                img = torch.unsqueeze(img, 0)
+            img = torch.unsqueeze(img, 0).to(self.device)
             out = self.net(img)[0]
             parsing = out.squeeze(0).cpu().numpy().argmax(0)
             

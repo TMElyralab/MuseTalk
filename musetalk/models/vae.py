@@ -7,6 +7,8 @@ import numpy as np
 from PIL import Image
 import os
 
+from musetalk.utils.device import get_device
+
 class VAE():
     """
     VAE (Variational Autoencoder) class for image processing.
@@ -23,7 +25,7 @@ class VAE():
         self.model_path = model_path
         self.vae = AutoencoderKL.from_pretrained(self.model_path)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = get_device()
         self.vae.to(self.device)
 
         if use_float16:

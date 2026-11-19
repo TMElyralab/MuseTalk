@@ -18,6 +18,7 @@ from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs
 from musetalk.utils.blending import get_image_prepare_material, get_image_blending
 from musetalk.utils.utils import load_all_model
 from musetalk.utils.audio_processor import AudioProcessor
+from musetalk.utils.device import get_device
 
 import shutil
 import threading
@@ -264,7 +265,8 @@ class Avatar:
 
         gen = datagen(whisper_chunks,
                      self.input_latent_list_cycle,
-                     self.batch_size)
+                     self.batch_size,
+                     device=device)
         start_time = time.time()
         res_frame_list = []
 
@@ -352,7 +354,7 @@ if __name__ == "__main__":
             print("Warning: Unable to find ffmpeg, please ensure ffmpeg is properly installed")
 
     # Set computing device
-    device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
+    device = get_device(args.gpu_id)
 
     # Load model weights
     vae, unet, pe = load_all_model(
