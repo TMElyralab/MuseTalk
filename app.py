@@ -368,17 +368,9 @@ def inference(audio_path, video_path, bbox_shift, extra_margin=10, parsing_mode=
     
     print(len(frames))
 
-    # Load the video
-    video_clip = VideoFileClip(input_video)
-
-    # Load the audio
-    audio_clip = AudioFileClip(audio_path)
-
-    # Set the audio to the video
-    video_clip = video_clip.set_audio(audio_clip)
-
-    # Write the output video
-    video_clip.write_videofile(output_vid_name, codec='libx264', audio_codec='aac',fps=25)
+    with VideoFileClip(input_video) as video_clip, AudioFileClip(audio_path) as audio_clip:
+        video_with_audio = video_clip.set_audio(audio_clip)
+        video_with_audio.write_videofile(output_vid_name, codec='libx264', audio_codec='aac', fps=25)
 
     os.remove("temp.mp4")
     #shutil.rmtree(result_img_save_path)
