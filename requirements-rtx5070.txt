@@ -1,0 +1,47 @@
+# Tailored requirements for Ubuntu 24.04 + CUDA 12.8 + RTX 5070
+# Updated based on expert feedback for stability
+#
+# ⚠️ INSTALLATION INSTRUCTIONS (Option B: Native Blackwell Support):
+# 1. Install PyTorch 2.7.0 (cu128) natively supporting sm_120:
+#    pip install torch==2.7.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 --force-reinstall
+# 2. Pre-install build tools and numpy:
+#    pip install --upgrade pip setuptools wheel numpy
+# 3. Install chumpy manually without build isolation:
+#    pip install chumpy --no-build-isolation
+# 4. Compile mmcv from source (must disable build isolation):
+#    pip install -U openmim ninja Cython
+#    NVCC_APPEND_FLAGS="-allow-unsupported-compiler" pip install "mmcv>=2.1.0" --no-build-isolation --no-cache-dir
+# 5. Install this file:
+#    pip install -r requirements-rtx5070.txt
+# Core AI Frameworks - Versions Locked
+diffusers==0.30.2
+transformers==4.39.2
+accelerate==0.28.0
+huggingface_hub==0.36.2  # Golden version: satisfies both transformers <1.0 and gradio requirements
+einops>=0.8.1
+omegaconf
+
+# OpenMMLab Ecosystem (required by musetalk/utils/preprocessing.py)
+# mmcv needs source compilation for CUDA 12.8, install separately (see instructions at top)
+# NOTE: MMLab packages below are installed via `mim` in Step D. Commented out to avoid pip resolver conflicts with mmcv version.
+# mmengine>=0.10.0
+# mmdet>=3.1.0   # <--- Added: Required by mmpose
+chumpy       # <--- Added: Required by mmpose
+# mmpose>=1.3.0
+
+# Media Processing - IMPORTANT: moviepy locked to 1.x
+moviepy==1.0.3
+opencv-python>=4.9.0.80,<4.11.0
+soundfile>=0.12.1
+librosa>=0.11.0
+ffmpeg-python
+imageio[ffmpeg]
+
+# Interface & Utilities
+gradio==5.24.0         # Locked to official tested version
+gradio-client==1.8.0   # Prevent conflict with hf-gradio/gradio 6.x
+pillow<10.0.0          # Prevent moviepy 1.0.3 crash (Image.ANTIALIAS removed in Pillow 10)
+requests
+gdown
+numpy<2.0.0
+setuptools  # Required by mmcv build (pkg_resources)

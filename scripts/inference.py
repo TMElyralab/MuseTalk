@@ -3,6 +3,16 @@ import cv2
 import math
 import copy
 import torch
+
+# --- PyTorch 2.6+ Compatibility Monkey Patch ---
+_original_load = torch.load
+def _patched_load(*args, **kwargs):
+    if 'weights_only' not in kwargs:
+        kwargs['weights_only'] = False
+    return _original_load(*args, **kwargs)
+torch.load = _patched_load
+# ---------------------------------------------
+
 import glob
 import shutil
 import pickle
@@ -81,6 +91,7 @@ def main(args):
     print("Loaded inference config:", inference_config)
     
     # Process each task
+    has_error = False
     for task_id in inference_config:
         try:
             # Get task configuration
@@ -89,6 +100,16 @@ def main(args):
             if "result_name" in inference_config[task_id]:
                 args.output_vid_name = inference_config[task_id]["result_name"]
             
+            # Pre-validate files
+            if not os.path.exists(video_path):
+                raise FileNotFoundError(f"Input face video/image/directory path does not exist: {video_path}")
+            if not os.path.exists(audio_path):
+                raise FileNotFoundError(f"Input audio path does not exist: {audio_path}")
+            if not os.path.isdir(video_path) and os.path.getsize(video_path) == 0:
+                raise ValueError(f"Input face video/image file is empty (0 bytes): {video_path}")
+            if os.path.getsize(audio_path) == 0:
+                raise ValueError(f"Input audio file is empty (0 bytes): {audio_path}")
+
             # Set bbox_shift based on version
             if args.version == "v15":
                 bbox_shift = 0  # v15 uses fixed bbox_shift
@@ -121,9 +142,15 @@ def main(args):
                 save_dir_full = os.path.join(temp_dir, input_basename)
                 os.makedirs(save_dir_full, exist_ok=True)
                 cmd = f"ffmpeg -v fatal -i {video_path} -start_number 0 {save_dir_full}/%08d.png"
-                os.system(cmd)
+                ret_code = os.system(cmd)
+                if ret_code != 0:
+                    raise RuntimeError(f"ffmpeg frame extraction failed with status code {ret_code}.")
                 input_img_list = sorted(glob.glob(os.path.join(save_dir_full, '*.[jpJP][pnPN]*[gG]')))
+                if not input_img_list:
+                    raise ValueError(f"No frames extracted from {video_path}. The video may be corrupted (e.g., moov atom missing).")
                 fps = get_video_fps(video_path)
+                if fps <= 0:
+                    raise ValueError(f"Invalid fps detected for video {video_path}: {fps}")
             elif get_file_type(video_path) == "image":
                 input_img_list = [video_path]
                 fps = args.fps
@@ -131,11 +158,15 @@ def main(args):
                 input_img_list = glob.glob(os.path.join(video_path, '*.[jpJP][pnPN]*[gG]'))
                 input_img_list = sorted(input_img_list, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
                 fps = args.fps
+                if not input_img_list:
+                    raise ValueError(f"No images found in directory: {video_path}")
             else:
                 raise ValueError(f"{video_path} should be a video file, an image file or a directory of images")
 
             # Extract audio features
             whisper_input_features, librosa_length = audio_processor.get_audio_feature(audio_path)
+            if whisper_input_features is None:
+                raise ValueError(f"Failed to process audio or extract features from {audio_path}")
             whisper_chunks = audio_processor.get_whisper_chunk(
                 whisper_input_features, 
                 device, 
@@ -247,6 +278,11 @@ def main(args):
             print(f"Results saved to {output_vid_name}")
         except Exception as e:
             print("Error occurred during processing:", e)
+            has_error = True
+
+    if has_error:
+        print("\n❌ Error: One or more tasks failed during processing.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -260,7 +296,7 @@ if __name__ == "__main__":
     parser.add_argument("--bbox_shift", type=int, default=0, help="Bounding box shift value")
     parser.add_argument("--result_dir", default='./results', help="Directory for output results")
     parser.add_argument("--extra_margin", type=int, default=10, help="Extra margin for face cropping")
-    parser.add_argument("--fps", type=int, default=25, help="Video frames per second")
+    parser.add_argument("--fps", type=float, default=25, help="Video frames per second")
     parser.add_argument("--audio_padding_length_left", type=int, default=2, help="Left padding length for audio")
     parser.add_argument("--audio_padding_length_right", type=int, default=2, help="Right padding length for audio")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size for inference")

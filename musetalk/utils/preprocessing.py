@@ -1,5 +1,5 @@
 import sys
-from face_detection import FaceAlignment,LandmarksType
+from .face_detection import FaceAlignment,LandmarksType
 from os import listdir, path
 import subprocess
 import numpy as np

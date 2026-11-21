@@ -168,6 +168,17 @@ download_model()  # for huggingface deployment.
 from musetalk.utils.blending import get_image
 from musetalk.utils.face_parsing import FaceParsing
 from musetalk.utils.audio_processor import AudioProcessor
+import torch
+
+# --- PyTorch 2.6+ Compatibility Monkey Patch ---
+_original_load = torch.load
+def _patched_load(*args, **kwargs):
+    if 'weights_only' not in kwargs:
+        kwargs['weights_only'] = False
+    return _original_load(*args, **kwargs)
+torch.load = _patched_load
+# ---------------------------------------------
+
 from musetalk.utils.utils import get_file_type, get_video_fps, datagen, load_all_model
 from musetalk.utils.preprocessing import get_landmark_and_bbox, read_imgs, coord_placeholder, get_bbox_range
 
