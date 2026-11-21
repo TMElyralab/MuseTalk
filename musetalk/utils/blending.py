@@ -131,6 +131,6 @@ def get_image_prepare_material(image, face_box, upper_boundary_ratio=0.5, expand
     modified_mask_image = Image.new('L', ori_shape, 0)
     modified_mask_image.paste(mask_image.crop((0, top_boundary, width, height)), (0, top_boundary))
 
-    blur_kernel_size = int(0.1 * ori_shape[0] // 2 * 2) + 1
+    blur_kernel_size = int(0.05 * ori_shape[0] // 2 * 2) + 1
     mask_array = cv2.GaussianBlur(np.array(modified_mask_image), (blur_kernel_size, blur_kernel_size), 0)
     return mask_array, crop_box
