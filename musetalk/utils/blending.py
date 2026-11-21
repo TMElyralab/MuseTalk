@@ -32,6 +32,35 @@ def face_seg(image, mode="raw", fp=None):
     return seg_image
 
 
+def _correct_teeth_whiteness(face_bgr, brightness_reduce=0.12, warm_shift=8, sat_boost=0.15):
+    """
+    Atenúa el blanco artificial de los dientes generados por el modelo.
+    Detecta píxeles muy brillantes y poco saturados en la mitad inferior
+    de la cara (zona de la boca) y les resta brillo + agrega tono cálido,
+    sin tocar piel ni labios (que ya vienen bien de fábrica).
+    """
+    hsv = cv2.cvtColor(face_bgr, cv2.COLOR_BGR2HSV).astype(np.float32)
+    h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
+
+    height = face_bgr.shape[0]
+    mouth_region = np.zeros(v.shape, dtype=bool)
+    mouth_region[int(height * 0.45):, :] = True
+
+    teeth_mask = mouth_region & (v > 170) & (s < 60)
+    if not np.any(teeth_mask):
+        return face_bgr
+
+    teeth_mask_f = cv2.GaussianBlur(teeth_mask.astype(np.float32), (5, 5), 0)
+
+    hsv[..., 1] = np.clip(s + sat_boost * 255 * teeth_mask_f, 0, 255)
+    hsv[..., 2] = np.clip(v - brightness_reduce * 255 * teeth_mask_f, 0, 255)
+
+    result = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR).astype(np.float32)
+    result[..., 0] = np.clip(result[..., 0] - warm_shift * teeth_mask_f, 0, 255)  # menos azul = mas calido
+
+    return result.astype(np.uint8)
+
+
 def get_image(image, face, face_box, upper_boundary_ratio=0.5, expand=1.5, mode="raw", fp=None):
     """
     将裁剪的面部图像粘贴回原始图像，并进行一些处理。
@@ -47,6 +76,9 @@ def get_image(image, face, face_box, upper_boundary_ratio=0.5, expand=1.5, mode=
     Returns:
         numpy.ndarray: 处理后的图像。
     """
+    # corregir blancura artificial de dientes antes de pegar la cara generada
+    face = _correct_teeth_whiteness(face)
+
     # 将 numpy 数组转换为 PIL 图像
     body = Image.fromarray(image[:, :, ::-1])  # 身体部分图像(整张图)
     face = Image.fromarray(face[:, :, ::-1])  # 面部图像
@@ -94,6 +126,8 @@ def get_image(image, face, face_box, upper_boundary_ratio=0.5, expand=1.5, mode=
 
 
 def get_image_blending(image, face, face_box, mask_array, crop_box):
+    face = _correct_teeth_whiteness(face)
+
     body = Image.fromarray(image[:,:,::-1])
     face = Image.fromarray(face[:,:,::-1])
 
